@@ -1,0 +1,6 @@
+arch/x86/boot/bzImage
+Root device is (8, 4)
+Setup is 13244 bytes (padded to 13312 bytes).
+System is 3876 kB
+CRC ab1c7011
+Kernel: arch/x86/boot/bzImage is ready  (#1)

@@ -1,0 +1,11 @@
+This is kernel package version 12.032.
+VERSION		= 2
+PATCHLEVEL	= 6
+SUBLEVEL		= 32
+EXTRAVERSION	= .38
+APPEND_TO_VERSION = delay
+KPKG_SELECTED_MODULES = 
+Debian Revision	= 2.6.32.38delay-10.00.Custom
+KPKG_ARCH	= 
+do_parallel	= -j4
+fast_dep		= -j4
