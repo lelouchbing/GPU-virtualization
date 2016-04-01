@@ -1,8 +1,8 @@
-/* This file is auto generated, version 298 */
+/* This file is auto generated, version 303 */
 /* SMP */
 #define UTS_MACHINE "i386"
-#define UTS_VERSION "#298 SMP Wed Mar 23 03:40:40 EDT 2016"
-#define LINUX_COMPILE_TIME "03:40:40"
+#define UTS_VERSION "#303 SMP Fri Apr 1 03:48:42 EDT 2016"
+#define LINUX_COMPILE_TIME "03:48:42"
 #define LINUX_COMPILE_BY "root"
 #define LINUX_COMPILE_HOST "cuda1"
 #define LINUX_COMPILE_DOMAIN

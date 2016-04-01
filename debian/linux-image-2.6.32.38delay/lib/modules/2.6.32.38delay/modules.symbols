@@ -794,6 +794,7 @@ alias symbol:drm_idlelock_take drm
 alias symbol:ib_ud_header_pack ib_core
 alias symbol:comedi_get_len_chanlist kcomedilib
 alias symbol:ir_codes_pixelview_new_table ir_common
+alias symbol:swap_plt_cuda_address kvm
 alias symbol:ip_vs_conn_put ip_vs
 alias symbol:snd_opl3_timer_new snd_opl3_lib
 alias symbol:osd_WaitEventSet hv_vmbus

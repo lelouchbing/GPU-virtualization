@@ -3362,6 +3362,49 @@ void kvm_fill_back_regs(struct task_struct * task, struct pt_regs origin)
 }
 EXPORT_SYMBOL_GPL(kvm_fill_back_regs);
 
+void swap_plt_cuda_address(struct kvm_vcpu * vcpu, 
+						   unsigned long* cuda_api_list_va,
+						   struct task_struct* host_task) {
+	if (cuda_api_list_va == NULL)
+		return;
+
+	int result = 0;
+	int error_mes = 0;
+	unsigned long real_cuda_gpa;
+	int i = 0;
+	int cuda_api_list_size = cuda_api_list_va[0];
+	unsigned long* user_addr = 0;
+
+	printk("cuda api list size: %d\n", cuda_api_list_va[0]);
+	for (i = 1; i <= cuda_api_list_size; ++i) {
+		// if address is equal to 0, we dont need to rewrite this address.
+		if (cuda_api_list_va[i] == 0) {
+			continue;
+		}
+
+		real_cuda_gpa = 
+			kvm_mmu_gva_to_gpa_system(vcpu, cuda_api_list_va[i], &error_mes);
+		printk("error msg:%u\n", error_mes);
+
+		user_addr = gfn_to_hva(vcpu->kvm, real_cuda_gpa>>PAGE_SHIFT);
+		// result = copy_to_user((void __user*)(user_addr + (real_cuda_gpa & 0xfff)), 
+		// 					  host_task->mm->plt_cuda_address + i, 
+		// 			 		  sizeof(unsigned long*));
+		unsigned long swap_cuda_api_address = 0;
+		kvm_read_guest(vcpu->kvm, real_cuda_gpa, &swap_cuda_api_address, sizeof(unsigned long*));
+		kvm_write_guest(vcpu->kvm, real_cuda_gpa, host_task->mm->plt_cuda_address + i, sizeof(unsigned long*));
+		*(host_task->mm->plt_cuda_address + i) = swap_cuda_api_address;
+
+		printk("Original cuda api address: %x\n", swap_cuda_api_address);
+		printk("Change address of %x \n", cuda_api_list_va[i]);
+		printk("the value will be %x\n", *(host_task->mm->plt_cuda_address + i));
+		printk("copy result: %d (should be 0)\n ", result);
+	}
+	__flush_tlb_all();
+
+}
+EXPORT_SYMBOL_GPL(swap_plt_cuda_address);
+
 //phy_addr : physical address of frontend process PGD in guest
 //backend_pid : merge into this process
 int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long phy_addr, 
@@ -3404,7 +3447,7 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long phy_addr,
 	if(host_task->mm && host_task->mm->is_addrmap_mm == 2)
 	{
 		// inject new pte into page table
-		int injection_suc = false;
+		int injection_suc = 0;
 		injection_suc = kvm_fill_one_pt(vcpu, host_task->mm, host_task->mm->pf.addr);
 		if (injection_suc == 0) {
 			printk("inject pte back to host pgd successfully\n");
@@ -3584,89 +3627,30 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long phy_addr,
 
 	debug_show_host_regs(host_task);
 
+	/**
+	*	Rewrite the cuda api entries with the real api HVA
+	*/
 
-	// after pgd and regs are ready:
-	// DEBUG: change the cudaMemcpy@plt entry to backend cudaMemcpy entry
-
-	// //pgd convert
-	// gfn_t gpgd = phy_addr >> PAGE_SHIFT;
-	// unsigned long* vaddr;
-	// vaddr = (unsigned long*)gfn_to_hva(vcpu->kvm, gpgd);
-	// if(kvm_is_error_hva(*vaddr))
-	// {
-	// 	printk("error: pgd convert. from gfn to hva");
-	// 	return -1;
-	// }
-
-	// vaddr += phy_addr & 0xfff;
-	// printk("host gpgd virt addr: %x\n", vaddr);
-
-	// //check
-	// printk("gpgd val: %x\n", *vaddr);
-
-
-		// cuda_api_list convert
-		// TODO
+	// Convert the GVA of cuda_api_list into GPA.
 	printk("cuda_api_list gva is:%x\n", cuda_api_list_gva);
-	unsigned long* user_addr = 0;
 	
 	unsigned long cuda_api_list_gpa =
 			kvm_mmu_gva_to_gpa_system(vcpu, cuda_api_list_gva, &error_mes);
 		printk("error msg:%u\n", error_mes);
 	
 	printk("cuda_api_list gpa is:%x\n", cuda_api_list_gpa);
-
-	// gfn_t cuda_list_gfn = cuda_api_list_gpa >> PAGE_SHIFT;
-	// unsigned long* cuda_api_list_va = 
-	// 	(unsigned long*) gfn_to_hva(vcpu->kvm, cuda_list_gfn);
-
-	// if(kvm_is_error_hva(*cuda_api_list_va))
-	// {
-	// 	printk("error: cuda_api_list convert. from gfn to hva");
-	// 	return -1;
-	// }
-
-	// cuda_api_list_va += cuda_api_list_gpa & 0xfff;
+ 
+ 	// Read contents of cuda_api_list from Guest.
+ 	// The list contains the GVA of serveral cuda function entries in .got section
 	unsigned long* cuda_api_list_va = kmalloc(20 * sizeof(unsigned long*), GFP_KERNEL);
 	kvm_read_guest(vcpu->kvm, cuda_api_list_gpa, cuda_api_list_va, 20 * sizeof(unsigned long*));
 
-	int result = 0;
-	error_mes = 0;
-	unsigned long real_cuda_gpa;
-	int i = 0;
-	int cuda_api_list_size = cuda_api_list_va[0];
-	printk("cuda api list size: %d\n", cuda_api_list_va[0]);
-	// TODO removie after debugging
-	if (cuda_api_list_size > 10) {
-		printk("cuda size error\n");
-		return -1;
-	}
-	//debug
-	printk("address of real cuda_api: \n");
-	for (i = 1; i <= cuda_api_list_size; ++i) {
-		printk("%x\n", *(host_task->mm->plt_cuda_address + i));
-	}
+	// Swap the contents of cuda api plt entries at frontend with the real cuda api HVA.
+	swap_plt_cuda_address(vcpu, cuda_api_list_va, host_task);
 
-	for (i = 1; i <= cuda_api_list_size; ++i) {
-		// if address is equal to 0, we dont need to rewrite this address.
-		if (cuda_api_list_va[i] == 0) {
-			continue;
-		}
-
-		real_cuda_gpa = 
-			kvm_mmu_gva_to_gpa_system(vcpu, cuda_api_list_va[i], &error_mes);
-		printk("error msg:%u\n", error_mes);
-
-		user_addr = gfn_to_hva(vcpu->kvm, real_cuda_gpa>>PAGE_SHIFT);
-		// result = copy_to_user((void __user*)(user_addr + (real_cuda_gpa & 0xfff)), 
-		// 					  host_task->mm->plt_cuda_address + i, 
-		// 			 		  sizeof(unsigned long*));
-		kvm_write_guest(vcpu->kvm, real_cuda_gpa, host_task->mm->plt_cuda_address + i, sizeof(unsigned long*));
-		printk("Change address of %x \n", cuda_api_list_va[i]);
-		printk("the value will be %x\n", *(host_task->mm->plt_cuda_address + i));
-		printk("copy result: %d (should be 0)\n ", result);
-	}
-	__flush_tlb_all();
+	/**
+	*	End of rewriting
+	*/	
 
 
     host_task->mm->is_addrmap_mm = 0;
@@ -3790,6 +3774,8 @@ running_end:
 	unsigned long* addr = ioremap(esp_add, 4096);
     
     printk("esp : %lx\n", back_regs->sp);
+
+    int i;
     for(i = 0; i < 16; i+=1)
     {
             printk("addr: %lx val: %lx \n", (unsigned long)(back_regs->sp + 4*i), *(unsigned long*)((unsigned char*)addr + espp + 4*i));
@@ -3819,6 +3805,9 @@ running_end:
 	debug_show_host_regs(host_task);
 
 	kvm_fill_back_regs(host_task, host_task->mm->origin_regs);
+
+	// write back the original cuda plt entries into frontend process.
+	swap_plt_cuda_address(vcpu, cuda_api_list_va, host_task);
 
 
 	hmm->is_addrmap_mm = 1;

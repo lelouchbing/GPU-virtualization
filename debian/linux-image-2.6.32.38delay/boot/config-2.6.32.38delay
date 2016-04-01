@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32.38delay
-# Wed Mar 23 03:39:19 2016
+# Fri Apr  1 03:48:21 2016
 #
 # CONFIG_64BIT is not set
 CONFIG_X86_32=y
