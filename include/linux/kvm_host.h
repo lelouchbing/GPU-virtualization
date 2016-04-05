@@ -116,6 +116,14 @@ struct kvm_memory_slot {
 	int user_alloc;
 };
 
+// Struct used for parameters transmission between Guest os and kvm hypercall handler.
+typedef struct hyper_parameter {
+	unsigned long pgd_pa;
+	unsigned long heap_start_va;
+	unsigned long heap_end_va;
+};
+
+
 static inline unsigned long kvm_dirty_bitmap_bytes(struct kvm_memory_slot *memslot)
 {
 	return ALIGN(memslot->npages, BITS_PER_LONG) / 8;
@@ -247,7 +255,7 @@ unsigned long gfn_to_hva(struct kvm *kvm, gfn_t gfn);
 //whb
 int kvm_fill_one_pt(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigned long addr);
 int kvm_fill_pt(struct kvm_vcpu* vcpu, struct mm_struct* mm);
-int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigned long esp);
+int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigned long esp, unsigned long heap_start, unsigned long heap_end);
 void debug_kvm_showpt(struct mm_struct *mm);
 unsigned long debug_get_phy(struct mm_struct* mm, unsigned long vaddr);
 int wake_up_host(struct task_struct* p);

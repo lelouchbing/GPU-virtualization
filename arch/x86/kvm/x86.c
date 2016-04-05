@@ -3405,21 +3405,24 @@ void swap_plt_cuda_address(struct kvm_vcpu * vcpu,
 }
 EXPORT_SYMBOL_GPL(swap_plt_cuda_address);
 
-//phy_addr : physical address of frontend process PGD in guest
-//backend_pid : merge into this process
-int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long phy_addr, 
+/**
+*	param_addr : GVA of struct hyper_param in frontend process, containing GPA of pate_table, the range of heap's address space.
+*	backend_pid : pid of gvirtus backend process.
+*	regs_addr:	GVA of struct regs, containing values of frontend process' registers.
+*	cuda_api_list_gva:	GVA of a list of cuda PLT entries in frontend process.
+*/
+int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr, 
 				unsigned long backend_pid, unsigned long regs_addr, 
 				unsigned long cuda_api_list_gva)
 {
+	/**
+	* Get Gvirtus backend process' task_struct by pid.
+	*/
+
 	struct pt_regs regs;
 
-	//struct pt_regs origin_regs;
+	printk("backend_pid %d\n", (int)backend_pid);
 
-	
-
-	printk("test backend_pid %d\n", (int)backend_pid);
-
-	//find process by pid
 	struct pid* hostpid = NULL;
 	hostpid = find_get_pid((int)backend_pid);
 	struct task_struct* host_task = NULL;
@@ -3437,26 +3440,34 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long phy_addr,
 		return -1;	
 	}
 
-	printk("kvm_addrmap init\n");
-
 	if(host_task->mm == NULL) {
 		printk("test mm NULL!!!\n");
 	}
+
+	/**
+	*	Get running context and fill regs into kernel stack.
+	*/
+	u32 error_mes = 0;
+	unsigned long reg_gpa;
+	reg_gpa = kvm_mmu_gva_to_gpa_system(vcpu, regs_addr, &error_mes);
+	kvm_read_guest(vcpu->kvm, reg_gpa, &regs, sizeof(regs));
+
 
 	//if come back from pf_injection then goto page_fault_back
 	if(host_task->mm && host_task->mm->is_addrmap_mm == 2)
 	{
 		// inject new pte into page table
 		int injection_suc = 0;
+		//kvm_fill_pt_to_original(vcpu, host_task->mm, regs.sp, 0, 0);
 		injection_suc = kvm_fill_one_pt(vcpu, host_task->mm, host_task->mm->pf.addr);
 		if (injection_suc == 0) {
 			printk("inject pte back to host pgd successfully\n");
 
-			printk("after injection pgd:\n");
+			//printk("after injection pgd:\n");
 			// void* temp_pgd = host_task->mm->pgd;
 			// host_task->mm->pgd = host_task->mm->guest_pgd;
 			//debug_kvm_showpt(host_task->mm);
-			// host_task->mm->pgd = temp_pgd;
+			// host_task->mm->pgd = temp_pgd; 
 		} else {
 			printk("injection false error: %d\n", injection_suc);
 		}
@@ -3465,47 +3476,27 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long phy_addr,
 		__flush_tlb_all();
 		host_task->mm->is_addrmap_mm = 1;
 		goto page_fault_back;
-
 	}
-	printk("kvm_addrmap here\n");
 
+	/**
+	*	Extract task_struct related info from frontend process:
+	*	1)	GPA of page_table
+	*	2)	The range of heap's GVA
+	*/
+	struct hyper_parameter param;
+	struct mm_struct * hmm = host_task->mm;
+	
+	unsigned long param_gpa;
+	param_gpa = kvm_mmu_gva_to_gpa_system(vcpu, param_addr, &error_mes);
+	kvm_read_guest(vcpu->kvm, param_gpa, &param, sizeof(struct hyper_parameter));
 	// DEBUG
-	printk("plt_cuda_address: %x\n", host_task->mm->plt_cuda_address);
+	printk("size: %d\n", sizeof(struct hyper_parameter));
+	printk("pgd: %lx, heap_start:%lx, heap_end:%lx \n", param.pgd_pa, param.heap_start_va, param.heap_end_va);
 
-	//regs convert
-
-	// unsigned long reg_gpa;
-	// u32 error_mes;
-	// reg_gpa = kvm_mmu_gva_to_gpa_system(vcpu, regs_addr, &error_mes);
-	// gfn_t reg_gfn = reg_gpa >> PAGE_SHIFT;
-	// unsigned long* reg_addr;
-	// reg_addr = (unsigned long*)gfn_to_hva(vcpu->kvm, reg_gfn);
-	// if(kvm_is_error_hva(*reg_addr))
-	// {
-	// 	printk("error: regs convert. from gfn to hva");
-	// 	return -1;
-	// }
-
-	// reg_addr += reg_gpa & 0xfff;
-	// regs = (struct pt_regs *) reg_addr;
-
-
-	u32 error_mes = 0;
-	unsigned long reg_gpa;
-	reg_gpa = kvm_mmu_gva_to_gpa_system(vcpu, regs_addr, &error_mes);
-	kvm_read_guest(vcpu->kvm, reg_gpa, &regs, sizeof(regs));
-
-
-	printk("reg_gva: %lx\n", regs_addr);
-	printk("reg_gpa: %lx\n", reg_gpa);
-
-	int s = 0;
-	for(; s <= 10; ++s)
-	{
-		printk("\t %lx", *((unsigned long*)(&regs)+s));
-	}
-
-	//pgd convert
+	/**
+	*	Convert frontend process' page_table GPA into HVA.
+	*/
+	unsigned long phy_addr = param.pgd_pa;
 	gfn_t gpgd = phy_addr >> PAGE_SHIFT;
 	unsigned long* vaddr;
 	vaddr = (unsigned long*)gfn_to_hva(vcpu->kvm, gpgd);
@@ -3521,66 +3512,42 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long phy_addr,
 	//check
 	printk("gpgd val: %x\n", *vaddr);
 
+	/**
+	*	Store the start and end GVA of heap into mm->pt_start and mm->pt_end.
+	*	So the do_page_fault can catch this fault and inject pg into Guest os.
+	*/
+	hmm->pt_start = param.heap_start_va;
+	hmm->pt_end = param.heap_end_va;
 
 
 	//first of all, make sure gvirtus_backend is sleeping
 
-
-	//find process by pid
-	
-	hostpid = find_get_pid((int)backend_pid);
-	
-	if(hostpid == NULL)
-	{
-		printk("error : struct pid NULL\n");
-		return -1;
-	}
-
-	host_task = pid_task(hostpid, PIDTYPE_PID);
-	if(host_task == NULL)
-	{
-		printk("error : struct task NULL\n");
-		return -1;	
-	}
-
-
-
 	//STOP gvirtus-backend process
-
-	//set_task_state(host_task, __TASK_TRACED);
-
-	//replace and backup pgd 
-	//make sure gvirtus-backend is sleeping
 
 	while(host_task->mm->is_addrmap_mm == 0)	//runnable
 	{
 		schedule();
 	}
 
-
-
-
-	struct mm_struct * hmm = host_task->mm;
-
 	hmm->origin_pgd = hmm->pgd;
 
-	printk("debug: pte before:\n");
+	//printk("debug: pte before:\n");
 	//debug_kvm_showpt(hmm);
 
-//debug
-	//debug_kvm_showpt(hmm);
-	//debug_show_host_regs(host_task);
-	/*
-
-
-		change vaddr to kernel addr space
-
+	/**
+	*	Rebuild the backend process' page_table.
+	*	1) Fill frontend's .text .bss sections, heap and stack into backend.
+	*	2) Realloc a new page_table and merge these two page_tables into one.
+	*
+	*	if ENABLE_ORIGINAL_PT is set to TRUE, will fill frontend process's
+	*	page table into original's. (remember disable the ENALBE_PF_INJECTION in
+	*	mm/fault.c)
 	*/
-	//hmm->guest_pgd = vaddr;
+	static const bool ENABLE_ORIGINAL_PT = true;
+
 	void* temp_pgd = kmalloc(4096, GFP_KERNEL);
 	memset(temp_pgd, 0, 4096);
 	memcpy(temp_pgd, vaddr, 4096);
-
 
 	hmm->guest_pgd = (pgd_t*) temp_pgd;
 
@@ -3603,14 +3570,8 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long phy_addr,
 		return -1;
 	}
 	
-	/* 
-	*	if ENABLE_ORIGINAL_PT is set to TRUE, will merge frontend process's
-	*	page table into original's. (remember disable the ENALBE_PF_INJECTION in
-	*	mm/fault.c)
-	*/
-	static const bool ENABLE_ORIGINAL_PT = true;
 	if (ENABLE_ORIGINAL_PT) {
-		kvm_fill_pt_to_original(vcpu, hmm, regs.sp);
+		kvm_fill_pt_to_original(vcpu, hmm, regs.sp, param.heap_start_va, param.heap_end_va);
 	} else {
 		kvm_fill_pt(vcpu, hmm);
 	}
@@ -3648,9 +3609,7 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long phy_addr,
 	// Swap the contents of cuda api plt entries at frontend with the real cuda api HVA.
 	swap_plt_cuda_address(vcpu, cuda_api_list_va, host_task);
 
-	/**
-	*	End of rewriting
-	*/	
+
 
 
     host_task->mm->is_addrmap_mm = 0;
@@ -3705,7 +3664,6 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long phy_addr,
 	// }
 
 page_fault_back:
-
 	while(1)
 	{
 		switch(host_task->mm->is_addrmap_mm)

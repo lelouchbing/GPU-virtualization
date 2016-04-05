@@ -451,12 +451,13 @@ static struct mm_struct * mm_init(struct mm_struct * mm, struct task_struct *p)
 	atomic_set(&mm->mm_users, 1);
 	atomic_set(&mm->mm_count, 1);
 
-	//whb: init is_addrmap_mm to 0
+	//Initialize all variables used in delayed submission module.
 	mm->is_backend = 0;
 	mm->is_addrmap_mm = 0;
 	mm->origin_pgd = NULL;
 	//reg pgd_alloc func
 	mm->kvm_alloc_pgd = pgd_alloc;
+	mm->pt_start = mm->pt_end = 0;
 
 	init_rwsem(&mm->mmap_sem);
 	INIT_LIST_HEAD(&mm->mmlist);

@@ -972,27 +972,6 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
 	address = read_cr2();
 
 
-	//whb 
-	/*
-		if mm->is_backend == 1, inject this pagefault back to KVM
-		if ENABLE_PF_INJECTION == false, DONT inject pf into Guest OS.
-		This will be set to True WHEN recbuild backend process' page table 
-		instead of merging ptes of guest os into backend's pt.
-	*/
-	static const bool ENABLE_PF_INJECTION = false;		
-	if(mm && mm->is_backend == 1 && ENABLE_PF_INJECTION)
-	{
-		mm->is_backend = 0;
-		mm->pf.addr = address;
-		mm->pf.error_code = error_code;
-		mm->is_addrmap_mm = 2;
-		while(mm->is_addrmap_mm == 2)
-		{
-			schedule();
-		}
-		up_read(&mm->mmap_sem);
-		return;
-	}
 
 	/*
 	 * Detect and handle instructions that would cause a page fault for
@@ -1004,6 +983,33 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
 
 	if (unlikely(kmmio_fault(regs, address)))
 		return;
+
+	/**
+	*	if mm->is_backend == 1 && the error_address is within the range of [pt_start, pt_end]
+	*	inject this pagefault back to KVM
+	*	if ENABLE_PF_INJECTION == false, DONT inject pf into Guest OS.
+	*	This will be set to True WHEN recbuild backend process' page table 
+	*	instead of merging ptes of guest os into backend's pt.
+	*/
+	static const bool ENABLE_PF_INJECTION = true;		
+	if(mm && mm->is_backend == 1 && ENABLE_PF_INJECTION)
+	{
+		printk("PAGE FAULT IN backend process: %lx\n", address);
+		if (mm->pt_start != 0 && mm->pt_end != 0 && 
+			address <= mm->pt_end && address >= mm->pt_start) {
+			
+			mm->pf.addr = address;
+			mm->pf.error_code = error_code;
+			mm->is_addrmap_mm = 2;
+			//up_read(&mm->mmap_sem);
+			while(mm->is_addrmap_mm == 2)
+			{
+				schedule();
+			}
+			return;
+		}
+	//	up_read(&mm->mmap_sem);
+	}
 
 	/*
 	 * We fault-in kernel-space virtual memory on-demand. The

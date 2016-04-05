@@ -219,24 +219,40 @@ struct mm_struct {
 	unsigned long cached_hole_size; 	/* if non-zero, the largest hole below free_area_cache */
 	unsigned long free_area_cache;		/* first hole of size cached_hole_size or larger */
 	pgd_t * pgd;
-	//whb:
-	int is_backend;
-	//save the virtual address of cuda api
+
+	/**
+	*	Several variables used for delayed submission in Gvirtus framework.
+	*/
+
+	// Whether this task(process) is a gvirtus backend process.
+	int is_backend;	
+
+	//Save the virtual address of real cuda apis
 	unsigned long* plt_cuda_address;
 
-	//used for inject
+	//Used for page_fault injection. Containing error address and types.
 	struct inject_pf pf;
+
+	// Store the current process' cpu context.
 	struct pt_regs origin_regs;
-	//use is_addrmap_mm to decide whether copy pg from guest process in handle_mm_fault
+	// The range of frontend process' stack and heap section. 
+	// So that when triggers a pagefault, we can know whether this should be injected back into frontend.
+	unsigned long pt_start, pt_end;
+
+	//Use is_addrmap_mm to decide whether copy pg from guest process in handle_mm_fault
 	unsigned long is_addrmap_mm;
-	//store origninal host process pgd here
+	//Store origninal host process pgd here
 	pgd_t * origin_pgd;
 
-	//guest process' pgd used in handle_mm_fault
+	//Guest process' pgd used in handle_mm_fault
 	pgd_t * guest_pgd;
 
-	//use kvm to get guest process
+	//Alloc a new pgd entry.
 	pgd_t* (*kvm_alloc_pgd) (struct mm_struct* mm);
+
+	/*
+	*	End of definition.	
+	*/
 
 	atomic_t mm_users;			/* How many users with user space? */
 	atomic_t mm_count;			/* How many references to "struct mm_struct" (users count as 1) */

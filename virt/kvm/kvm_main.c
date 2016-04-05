@@ -1491,7 +1491,7 @@ gpa_t temp;
 
 
 	
-	down_read(&mm->mmap_sem);
+	//down_read(&mm->mmap_sem);
 	
 
 
@@ -1624,7 +1624,7 @@ gpa_t temp;
 
 						native_set_pte(h_pte, native_make_pte((pfn << PAGE_SHIFT) | (temp & 0xfff)));
 						//native_make_pte((pfn << PAGE_SHIFT) | (temp & 0xfff));
-						//printk("h_pte addr: %lx h_pte val: %lx \n", h_pte, *h_pte);
+						printk("h_pte addr: %lx h_pte val: %lx \n", h_pte, *h_pte);
 						//printk("finished\n");
 
 						pte_unmap(h_pte);
@@ -1640,7 +1640,7 @@ gpa_t temp;
 		//else printk("error pgd\n");
 	
 
-	up_read(&mm->mmap_sem);
+	//up_read(&mm->mmap_sem);
 	return -3;
 }
 EXPORT_SYMBOL_GPL(kvm_fill_one_pt);
@@ -1654,16 +1654,14 @@ EXPORT_SYMBOL_GPL(kvm_fill_one_pt);
 *	cover 0x8048000 -> 0x9000000 in mm->pgd (0x9000000 is the base address of backend forked process)
 *	0xc0000000 down to %esp to rebuild the stack space.
 */
-int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigned long esp) {
+int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigned long esp, unsigned long heap_start, unsigned long heap_end) {
 
-	down_read(&mm->mmap_sem);
+	//down_read(&mm->mmap_sem);
 
 	// copy mm->original to mm->pgd
 	memset(mm->pgd, 0, 4096);
 	memcpy(mm->pgd, mm->origin_pgd, 4096);
 
-	// now start from 0x0 to cover all shared lib in front process
-	// copy (0x8048000 --> 0x9000000 in mm->guest_pgd into mm->pgd, converting to host_ha)
 	pgd_t* guest_pgd = NULL;
 	pgd_t* host_pgd = NULL;
 	gpa_t new_host_pgd_page_pa;
@@ -1673,25 +1671,24 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 	pte_t* guest_ptep;
 	pte_t* host_ptep;
 
-	unsigned long* new_host_pgd_page;
+	// reset .heap section. Make sure the range of .heap is valid.
 	int start;
+	if (heap_start >= 0x8048000) {
+		for (start = heap_start; start <= heap_end; start += 4096) {
+			host_ptep = kvm_get_pte(mm, start);
+			native_set_pte(host_ptep, native_make_pte(0));
+			printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
+			pte_unmap(host_ptep);
+		}
+	}
+	// now start from 0x0 to cover all shared libs in front process
+	// copy (0x8048000 --> 0x9000000 in mm->guest_pgd into mm->pgd, converting to host_va)
+
+	unsigned long* new_host_pgd_page;
 	for (start = 0x0; start < 0x9000000; start += 4096) {
 		guest_pgd = mm->guest_pgd + pgd_index(start);
 		if (!native_pgd_val(*guest_pgd) || pgd_bad(*guest_pgd))
 			continue;
-
-		// if (!host_pgd || host_pgd != mm->pgd + pgd_index(start)) {
-		// 	// alloc new pmd page to contain frontend process's pmd after converting.
-		// 	new_host_pgd_page = kmalloc(4096, GFP_KERNEL);
-		// 	memset(new_host_pgd_page, 0, 4096);
-
-		// 	new_host_pgd_page_pa = (gpa_t)virt_to_phys(new_host_pgd_page);
-		// 	host_pgd_pfn = new_host_pgd_page_pa >> PAGE_SHIFT;
-
-		// 	// new_pgd's phy address + guest pgd's privilege
-		// 	host_pgd = mm->pgd + pgd_index(start);
-		// 	*host_pgd = native_make_pgd(host_pgd_pfn << PAGE_SHIFT | (native_pgd_val(*guest_pgd) & 0xfff));
-		// }
 
 		// convert the corresponding gpa to hpa
 		gpa_t temp = (gpa_t)native_pgd_val(*guest_pgd);
@@ -1706,12 +1703,18 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 
 			// host_ptep = new_host_pgd_page + pte_index(start);
 			host_ptep = kvm_get_pte(mm, start);
+			pte_t new_pte = native_make_pte((guest_pte_pfn << PAGE_SHIFT) | (temp & 0xfff));
 			if (host_ptep != NULL) {
-				native_set_pte(host_ptep, native_make_pte((guest_pte_pfn << PAGE_SHIFT) | (temp & 0xfff)));
+				native_set_pte(host_ptep, new_pte);
+				// DEBUG
+				printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
 				pte_unmap(host_ptep);
 			}
+
 		}
 	}
+
+	printk("kvm_fill_pt_to_original : pt esp:%lx\n", mm->pt_start);
 
 	// copy (0xc0000000 --> %esp in mm->guest_pgd into mm->pgd, converting to host_ha)
 	for (start = 0xc0000000 - 4096; start + 4096 >= esp; start -= 4096) {
@@ -1719,19 +1722,6 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 		if (!native_pgd_val(*guest_pgd) || pgd_bad(*guest_pgd))
 			continue;
 
-		// if (!host_pgd || host_pgd != mm->pgd + pgd_index(start)) {
-		// 	// alloc new pmd page to contain frontend process's pmd after converting.
-		// 	new_host_pgd_page = kmalloc(4096, GFP_KERNEL);
-		// 	memset(new_host_pgd_page, 0, 4096);
-
-		// 	new_host_pgd_page_pa = (gpa_t)virt_to_phys(new_host_pgd_page);
-		// 	host_pgd_pfn = new_host_pgd_page_pa >> PAGE_SHIFT;
-
-		// 	// new_pgd's phy address + guest pgd's privilege
-		// 	host_pgd = mm->pgd + pgd_index(start);
-		// 	*host_pgd = native_make_pgd(host_pgd_pfn << PAGE_SHIFT | (native_pgd_val(*guest_pgd) & 0xfff));
-		// }
-
 		// convert the corresponding gpa to hpa
 		gpa_t temp = (gpa_t)native_pgd_val(*guest_pgd);
 		gfn = temp >> PAGE_SHIFT;
@@ -1744,15 +1734,18 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 			guest_pte_pfn = gfn_to_pfn(vcpu->kvm, gfn);
 
 			// host_ptep = new_host_pgd_page + pte_index(start);
+			pte_t new_pte = native_make_pte((guest_pte_pfn << PAGE_SHIFT) | (temp & 0xfff));
 			host_ptep = kvm_get_pte(mm, start);
 			if (host_ptep != NULL) {
-				native_set_pte(host_ptep, native_make_pte((guest_pte_pfn << PAGE_SHIFT) | (temp & 0xfff)));
+				native_set_pte(host_ptep, new_pte);
+				// DEBUG
+				printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
 				pte_unmap(host_ptep);
 			}
 		}
 	}
 	
-	up_read(&mm->mmap_sem);
+	//up_read(&mm->mmap_sem);
 }
 EXPORT_SYMBOL_GPL(kvm_fill_pt_to_original);
 
@@ -1779,7 +1772,7 @@ int kvm_fill_pt(struct kvm_vcpu* vcpu, struct mm_struct* mm)
 
 
 	
-	down_read(&mm->mmap_sem);
+	//down_read(&mm->mmap_sem);
 	
 
 
@@ -1927,7 +1920,7 @@ int kvm_fill_pt(struct kvm_vcpu* vcpu, struct mm_struct* mm)
 		//else printk("error pgd\n");
 	}
 
-	up_read(&mm->mmap_sem);
+	//up_read(&mm->mmap_sem);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(kvm_fill_pt);
