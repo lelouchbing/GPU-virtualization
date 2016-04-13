@@ -2818,7 +2818,6 @@ static inline int check_stack_guard_page(struct vm_area_struct *vma, unsigned lo
 	address &= PAGE_MASK;
 	if ((vma->vm_flags & VM_GROWSDOWN) && address == vma->vm_start) {
 		struct vm_area_struct *prev = vma->vm_prev;
-
 		/*
 		 * Is there a mapping abutting this one below?
 		 *
@@ -2930,6 +2929,8 @@ static int do_anonymous_page_sy(struct mm_struct *mm, struct vm_area_struct *vma
 	/* Check if we need to add a guard page to the stack */
 	if (check_stack_guard_page(vma, address) < 0)
 		return VM_FAULT_SIGBUS;
+
+	printk("pass check_stack_guard_page\n");
 
 	/* Use the zero-page for reads */
 	if (!(flags & FAULT_FLAG_WRITE)) {
@@ -3294,16 +3295,23 @@ static inline int handle_pte_fault_sy(struct mm_struct *mm,
 	if (!pte_present(entry)) {
 		if (pte_none(entry)) {
 			if (vma->vm_ops) {
-				if (likely(vma->vm_ops->fault))
+				if (likely(vma->vm_ops->fault)) {
+					printk("do_linear_fault\n");
 					return do_linear_fault(mm, vma, address,
 						pte, pmd, flags, entry);
+				}
 			}
+			printk("do_anonymous_page\n");
+
 			return do_anonymous_page_sy(mm, vma, address,
 						 pte, pmd, flags, mypage);
 		}
-		if (pte_file(entry))
+		if (pte_file(entry)) {
+			printk("do_nonlinear_fault\n");
 			return do_nonlinear_fault(mm, vma, address,
 					pte, pmd, flags, entry);
+		}
+		printk("do_swap_page\n");
 		return do_swap_page(mm, vma, address,
 					pte, pmd, flags, entry);
 	}
@@ -3417,7 +3425,7 @@ int handle_mm_fault_sy(struct mm_struct *mm, struct vm_area_struct *vma,
 	pte = pte_alloc_map(mm, pmd, address);
 	if (!pte)
 		return VM_FAULT_OOM;
-
+	printk("pass pgd alloc\n");
 	return handle_pte_fault_sy(mm, vma, address, pte, pmd, flags, mypage);
 }
 

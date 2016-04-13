@@ -2860,7 +2860,7 @@ d41d8cd98f00b204e9800998ecf8427e  usr/src/linux-headers-2.6.32.38delay/include/c
 d41d8cd98f00b204e9800998ecf8427e  usr/src/linux-headers-2.6.32.38delay/include/config/irnet.h
 d41d8cd98f00b204e9800998ecf8427e  usr/src/linux-headers-2.6.32.38delay/include/config/sdla.h
 d41d8cd98f00b204e9800998ecf8427e  usr/src/linux-headers-2.6.32.38delay/include/config/bounce.h
-c369ad4adf1b1166315e93ed0221c23f  usr/src/linux-headers-2.6.32.38delay/include/config/auto.conf
+f2c6c8ddfb2929ed4a429302fdea0e06  usr/src/linux-headers-2.6.32.38delay/include/config/auto.conf
 d41d8cd98f00b204e9800998ecf8427e  usr/src/linux-headers-2.6.32.38delay/include/config/i2c.h
 d41d8cd98f00b204e9800998ecf8427e  usr/src/linux-headers-2.6.32.38delay/include/config/rt2500usb.h
 d41d8cd98f00b204e9800998ecf8427e  usr/src/linux-headers-2.6.32.38delay/include/config/rt61pci.h
@@ -4702,7 +4702,7 @@ e831b1cff03df06a6736db90695b0717  usr/src/linux-headers-2.6.32.38delay/include/l
 ea40b76fb4f4d92fbc9a12a3890a42ba  usr/src/linux-headers-2.6.32.38delay/include/linux/cgroup_subsys.h
 d7b48c0a6dc8018ba12b92ee801d45f0  usr/src/linux-headers-2.6.32.38delay/include/linux/serial_sci.h
 e552453ea4093c1b393b142eaafdc423  usr/src/linux-headers-2.6.32.38delay/include/linux/anon_inodes.h
-19f0ca1692f62292bed24c992112d874  usr/src/linux-headers-2.6.32.38delay/include/linux/autoconf.h
+e7f7067a1e3f9ab2e6ab895fb2bfb540  usr/src/linux-headers-2.6.32.38delay/include/linux/autoconf.h
 dc493d0a3893c23fcc770d0b4344074d  usr/src/linux-headers-2.6.32.38delay/include/linux/ioc3.h
 c5b0b301cf36a221a9edc7efaa4931bd  usr/src/linux-headers-2.6.32.38delay/include/linux/eisa.h
 efcdb1aa61f48623145117824811e23d  usr/src/linux-headers-2.6.32.38delay/include/linux/cd1400.h
@@ -5072,7 +5072,7 @@ e9c883ee279870957ba938c202cff7ec  usr/src/linux-headers-2.6.32.38delay/include/l
 59ca624365a327f891c9f44ea8b6bc74  usr/src/linux-headers-2.6.32.38delay/include/linux/sm501.h
 dfcf0611d08c15d22a8a2fbd4af8ffb9  usr/src/linux-headers-2.6.32.38delay/include/linux/nilfs2_fs.h
 e017d3c0b694bdfffd1408a1ab3b1d3c  usr/src/linux-headers-2.6.32.38delay/include/linux/mv643xx.h
-f759c5b3f975bb92fabfcdfa36d5855f  usr/src/linux-headers-2.6.32.38delay/include/linux/mm_types.h
+8c3ffbf2e27ba97fbc66ee0ebe339a0f  usr/src/linux-headers-2.6.32.38delay/include/linux/mm_types.h
 ebe055c67995b28b7e03552e2b25c2ae  usr/src/linux-headers-2.6.32.38delay/include/linux/atmel_pwm.h
 0e0e556dae386c44d3dd55badbb13041  usr/src/linux-headers-2.6.32.38delay/include/linux/crc32c.h
 0b6470b804a3c0189cc861dbf6580c23  usr/src/linux-headers-2.6.32.38delay/include/linux/linkage.h
@@ -5137,7 +5137,7 @@ b1109733ca53903f77a426df66ae4459  usr/src/linux-headers-2.6.32.38delay/include/l
 a254c6a508274f13edc3a002dd5f96de  usr/src/linux-headers-2.6.32.38delay/include/linux/cpu.h
 051654f3bc5de6b714561eee6cd4cf71  usr/src/linux-headers-2.6.32.38delay/include/linux/veth.h
 601888af5fa7b37949a957ad7764642e  usr/src/linux-headers-2.6.32.38delay/include/linux/hil.h
-4e3141b319c27f0da14b262a0adeed1a  usr/src/linux-headers-2.6.32.38delay/include/linux/compile.h
+fcaf3a158f38b2946f46df3741b938a8  usr/src/linux-headers-2.6.32.38delay/include/linux/compile.h
 234e80922a14ffcd09540ec215a9550a  usr/src/linux-headers-2.6.32.38delay/include/linux/fs_uart_pd.h
 685f83f7ef0c4a7e8de74d03b3ea31bf  usr/src/linux-headers-2.6.32.38delay/include/linux/kvm_host.h
 cdbafa97210215a310ea535a6414ae7f  usr/src/linux-headers-2.6.32.38delay/include/linux/atmapi.h
@@ -6087,7 +6087,7 @@ e2a973235249a098b34c84a266aa0a1e  usr/src/linux-headers-2.6.32.38delay/include/c
 1c1c8385aad893de1d1f150db783a736  usr/src/linux-headers-2.6.32.38delay/include/crypto/aes.h
 2b4738b8e059ec568bada933f99db59e  usr/src/linux-headers-2.6.32.38delay/include/crypto/ctr.h
 0b7f0fdf81005178692fec263d3c1a0d  usr/src/linux-headers-2.6.32.38delay/include/crypto/scatterwalk.h
-c0049a473b10852054143b0a0c5102dc  usr/src/linux-headers-2.6.32.38delay/.config
+4ef7abd58ba982e82a46be4ab900685e  usr/src/linux-headers-2.6.32.38delay/.config
 30ef9c7c2fb6de9a11b101d578d89687  usr/src/linux-headers-2.6.32.38delay/scripts/checkstack.pl
 11a836a5aacc90586554c3718d53f2a1  usr/src/linux-headers-2.6.32.38delay/scripts/Lindent
 171204fd074c18ad0be090b008e34708  usr/src/linux-headers-2.6.32.38delay/scripts/checkincludes.pl
@@ -7343,7 +7343,7 @@ d8cb033e9ffa4ee0e056064965b84965  usr/src/linux-headers-2.6.32.38delay/arch/micr
 49f24809b76f2d139d0d62b0f95b3e7a  usr/src/linux-headers-2.6.32.38delay/arch/x86/mm/kmemcheck/Makefile
 404712e9316fd429b090bb25a02535e4  usr/src/linux-headers-2.6.32.38delay/arch/x86/mm/Makefile
 cbfc1821370f8578448e227e9dfab7db  usr/src/linux-headers-2.6.32.38delay/arch/x86/vdso/Makefile
-4102a45a2e21e1c20640759723b09c1e  usr/src/linux-headers-2.6.32.38delay/arch/x86/kernel/asm-offsets.s
+5f71fff406f5fe2b6576547d831e2389  usr/src/linux-headers-2.6.32.38delay/arch/x86/kernel/asm-offsets.s
 3649fcc549e070e6bb17459d32485cd6  usr/src/linux-headers-2.6.32.38delay/arch/x86/kernel/apic/Makefile
 8463a1343a03a0df3a7002437868d2ae  usr/src/linux-headers-2.6.32.38delay/arch/x86/kernel/acpi/realmode/Makefile
 ea574132c0fc59b36c236931fa468f90  usr/src/linux-headers-2.6.32.38delay/arch/x86/kernel/acpi/Makefile
@@ -8506,7 +8506,7 @@ a209345d6fc7a6a0593b4af57643ad0e  usr/src/linux-headers-2.6.32.38delay/drivers/b
 5648cf0ec60c82217897293fa56a8d9c  usr/src/linux-headers-2.6.32.38delay/drivers/crypto/Kconfig
 d68c81645eb18658be6535b9a1c0e1a8  usr/src/linux-headers-2.6.32.38delay/drivers/crypto/amcc/Makefile
 2e9c6b7abb254e910c632db6f9d88815  usr/src/linux-headers-2.6.32.38delay/drivers/crypto/Makefile
-1aedf2dd440e35b9a3d03f44d610bfab  usr/src/linux-headers-2.6.32.38delay/Module.symvers
+f6896be9aac151cadec0f8e810a08484  usr/src/linux-headers-2.6.32.38delay/Module.symvers
 77ddc593b276f901d25b1ebd84cfe943  usr/src/linux-headers-2.6.32.38delay/debian/templates.in
 47d11d0e4b25eb3b1356e8465991fc29  usr/src/linux-headers-2.6.32.38delay/debian/config
 5b2608fe56833e4f94c663a3c7dcc59d  usr/src/linux-headers-2.6.32.38delay/debian/examples/sample.module.control
@@ -8729,11 +8729,11 @@ bb0ecd9c664b8081a76d1e9d1cf366b4  usr/share/doc/linux-headers-2.6.32.38delay/elf
 c9b1e40980430e704343a2a449c7464c  usr/share/doc/linux-headers-2.6.32.38delay/REPORTING-BUGS.gz
 eaa95cbd8228a85432336cf1a859ad34  usr/share/doc/linux-headers-2.6.32.38delay/examples/create_link
 f065487e39fd5e9ea73099d9383c20dc  usr/share/doc/linux-headers-2.6.32.38delay/MAINTAINERS.gz
-8a96b473f8d7bde4168fa12fda7ac73f  usr/share/doc/linux-headers-2.6.32.38delay/changelog.Debian.gz
-243ae0377ef8523996a0232e32967ecf  usr/share/doc/linux-headers-2.6.32.38delay/config-2.6.32.38delay.gz
+8042beed7dfb83423c6bc03d679ce730  usr/share/doc/linux-headers-2.6.32.38delay/changelog.Debian.gz
+98b69795cbe7444c353715223ba7be39  usr/share/doc/linux-headers-2.6.32.38delay/config-2.6.32.38delay.gz
 e86fbcbd13a0dbd451973c20146c963f  usr/share/doc/linux-headers-2.6.32.38delay/Buildinfo
 bfd04dc0f35b407f9e05e71157d6e9e9  usr/share/doc/linux-headers-2.6.32.38delay/debian.README.gz
-a6ad94c210ab7821b947d61725156f5a  usr/share/doc/linux-headers-2.6.32.38delay/conf.vars.gz
+21a3c4f1dcdf2dbbb0bc6752e37e1ea0  usr/share/doc/linux-headers-2.6.32.38delay/conf.vars.gz
 c691563ee96488614966a006e9437db9  usr/share/doc/linux-headers-2.6.32.38delay/CREDITS.gz
 4d09c3dfd62370f5c657695db3c192ae  usr/share/doc/linux-headers-2.6.32.38delay/copyright
 28cb8f954ce60ca5782d76643f62dc62  usr/share/doc/linux-headers-2.6.32.38delay/README.gz

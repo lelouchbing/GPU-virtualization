@@ -227,10 +227,10 @@ struct mm_struct {
 	// Whether this task(process) is a gvirtus backend process.
 	int is_backend;	
 
-	//Save the virtual address of real cuda apis
+	// Save the virtual address of real cuda apis
 	unsigned long* plt_cuda_address;
 
-	//Used for page_fault injection. Containing error address and types.
+	// Used for page_fault injection. Containing error address and types.
 	struct inject_pf pf;
 
 	// Store the current process' cpu context.
@@ -239,15 +239,23 @@ struct mm_struct {
 	// So that when triggers a pagefault, we can know whether this should be injected back into frontend.
 	unsigned long pt_start, pt_end;
 
-	//Use is_addrmap_mm to decide whether copy pg from guest process in handle_mm_fault
+	// Use is_addrmap_mm to decide whether copy pg from guest process in handle_mm_fault
 	unsigned long is_addrmap_mm;
-	//Store origninal host process pgd here
-	pgd_t * origin_pgd;
+	// Store origninal host process pgd here
+	pgd_t * origin_pgd; 
 
-	//Guest process' pgd used in handle_mm_fault
+	/********************************************************/
+	/* Save the following contents before any PF injection. */
+
+	// Guest process' pgd used in handle_mm_fault
 	pgd_t * guest_pgd;
 
-	//Alloc a new pgd entry.
+	// GVA of cuda api entries
+	unsigned long* cuda_api_list;
+
+	/********************************************************/
+
+	// Alloc a new pgd entry.
 	pgd_t* (*kvm_alloc_pgd) (struct mm_struct* mm);
 
 	/*

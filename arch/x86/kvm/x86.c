@@ -3608,7 +3608,7 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 
 	// Swap the contents of cuda api plt entries at frontend with the real cuda api HVA.
 	swap_plt_cuda_address(vcpu, cuda_api_list_va, host_task);
-
+	host_task->mm->cuda_api_list = cuda_api_list_va;
 
 
 
@@ -3765,11 +3765,14 @@ running_end:
 	kvm_fill_back_regs(host_task, host_task->mm->origin_regs);
 
 	// write back the original cuda plt entries into frontend process.
-	swap_plt_cuda_address(vcpu, cuda_api_list_va, host_task);
+	swap_plt_cuda_address(vcpu, host_task->mm->cuda_api_list, host_task);
 
 
 	hmm->is_addrmap_mm = 1;
 	
+	kfree(host_task->mm->guest_pgd);
+	kfree(host_task->mm->cuda_api_list);
+
 	printk("kvm dealy end\n");
 	
 	return 0;

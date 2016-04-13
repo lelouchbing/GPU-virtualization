@@ -162,7 +162,23 @@ SYSCALL_DEFINE3(addrmap, unsigned long __user *, pfn, unsigned long, len, unsign
         unsigned long * mypfn;
 
 		printk(KERN_INFO "sangyan: len %lu\n", len);
-        hva_value = get_unmapped_area(NULL, 0, len*4096, 0, 0);
+		int start_map = 0;
+		struct vm_area_struct* vma_iter;
+		int times = 0;
+find_anonymous_area:
+        hva_value = get_unmapped_area(NULL, start_map, max(len*4096, 4096*200), 0, 0);
+        if (hva_value == -ENOSYS)
+        	return -1;
+
+     	vma_iter = find_vma(current->mm, hva_value);
+     	if (times < 5 && vma_iter && vma_iter->vm_ops && vma_iter->vm_ops->fault) {
+     		start_map = hva_value + 4096 * 1024;
+     		printk("continue to find anonymous area\n");
+     		printk("%x\n", start_map);
+     		times++;
+     		goto find_anonymous_area;
+		}
+
 		printk(KERN_INFO "sangyan: hva %lu\n", hva_value);
         l = len; s2 = hva_value; mypfn = pfn;
         while(l > 0)
