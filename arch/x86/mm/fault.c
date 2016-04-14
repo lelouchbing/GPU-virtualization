@@ -946,6 +946,19 @@ static int fault_in_kernel_space(unsigned long address)
 	return address >= TASK_SIZE_MAX;
 }
 
+// Helper function to decide whether the given address should be precessed in Guest OS
+
+static int fault_in_frontend_address_area(struct mm_struct *mm, unsigned long address) {
+	if (mm->pt_start != 0 && mm->pt_end != 0) {
+		if ((address <= mm->pt_end && address >= mm->pt_start) || 
+			(address >= 0x40000000 && address < 0x50000000) ||
+			(address >= 0xb0000000 && address < 0xc0000000)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 /*
  * This routine handles page faults.  It determines the address,
  * and the problem, and then passes it off to one of the appropriate
@@ -995,8 +1008,7 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
 	if(mm && mm->is_backend == 1 && ENABLE_PF_INJECTION)
 	{
 		printk("PAGE FAULT IN backend process: %lx\n", address);
-		if (mm->pt_start != 0 && mm->pt_end != 0 && 
-			address <= mm->pt_end && address >= mm->pt_start) {
+		if (fault_in_frontend_address_area(mm, address)) {
 			
 			mm->pf.addr = address;
 			mm->pf.error_code = error_code;

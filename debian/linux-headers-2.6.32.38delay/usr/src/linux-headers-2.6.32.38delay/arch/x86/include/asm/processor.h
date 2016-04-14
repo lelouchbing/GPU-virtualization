@@ -888,7 +888,7 @@ static inline void spin_lock_prefetch(const void *x)
  */
 #define TASK_SIZE		PAGE_OFFSET
 #define TASK_SIZE_MAX		TASK_SIZE
-#define STACK_TOP		TASK_SIZE
+#define STACK_TOP		(PAGE_ALIGN(TASK_SIZE - 0x10000000))
 #define STACK_TOP_MAX		STACK_TOP
 
 #define INIT_THREAD  {							  \
@@ -987,7 +987,10 @@ extern void start_thread(struct pt_regs *regs, unsigned long new_ip,
  * This decides where the kernel will search for a free chunk of vm
  * space during mmap's.
  */
-#define TASK_UNMAPPED_BASE	(PAGE_ALIGN(TASK_SIZE / 3))
+
+ /* Change the base address of mmap to 0x50000000, so there will be enough space for frontend's mmapping. */
+
+#define TASK_UNMAPPED_BASE	(PAGE_ALIGN(TASK_SIZE / 3 + 0x10000000))
 
 #define KSTK_EIP(task)		(task_pt_regs(task)->ip)
 

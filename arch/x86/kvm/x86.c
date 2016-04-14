@@ -3571,7 +3571,7 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 	}
 	
 	if (ENABLE_ORIGINAL_PT) {
-		kvm_fill_pt_to_original(vcpu, hmm, regs.sp, param.heap_start_va, param.heap_end_va);
+		kvm_fill_pt_to_original(vcpu, hmm, param.heap_start_va, param.heap_end_va);
 	} else {
 		kvm_fill_pt(vcpu, hmm);
 	}

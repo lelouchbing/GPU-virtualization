@@ -1646,15 +1646,17 @@ gpa_t temp;
 EXPORT_SYMBOL_GPL(kvm_fill_one_pt);
 
 /**
-*	merge frontend process's .text .data .bss sections into original pgd(mm->pgd)
-*	mm->pgd = alloc_pgd
-*	copy mm->origin_pgd to mm->pgd.
-*	mm->guest_pgd 
-*	----address_convert_from_guest_pa_to_host_pa----
-*	cover 0x8048000 -> 0x9000000 in mm->pgd (0x9000000 is the base address of backend forked process)
-*	0xc0000000 down to %esp to rebuild the stack space.
+*	Merge frontend process's .text .data .bss .heap. stack sections and mmaps into original pgd(mm->pgd)
+*	1) Alloc new top level pgd_entry
+*	2) Copy backend process' top level pgd
+*	3) Reset [heap_start, heap_end] 
+*
+*	4) Convert GFN wintin [0x0, 0x10000000) into PFN and rewrite pte entries for .text .data .bss sections.
+*	here 0x10000000 is the base address of backend forked process' .text section.
+*	5) Convert GFN within [0xb0000000, 0xc0000000) into PFN to rebuild the .stack section.
+*	6) Convert GFN within [0x40000000, 0x50000000) into PFN to rebuild the mmap area in frontend process.
 */
-int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigned long esp, unsigned long heap_start, unsigned long heap_end) {
+int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigned long heap_start, unsigned long heap_end) {
 
 	//down_read(&mm->mmap_sem);
 
@@ -1681,11 +1683,10 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 			pte_unmap(host_ptep);
 		}
 	}
-	// now start from 0x0 to cover all shared libs in front process
-	// copy (0x8048000 --> 0x9000000 in mm->guest_pgd into mm->pgd, converting to host_va)
 
+	// copy [0x0, 0x10000000) in mm->guest_pgd into mm->pgd, converting to host_va
 	unsigned long* new_host_pgd_page;
-	for (start = 0x0; start < 0x9000000; start += 4096) {
+	for (start = 0x0; start < 0x10000000; start += 4096) {
 		guest_pgd = mm->guest_pgd + pgd_index(start);
 		if (!native_pgd_val(*guest_pgd) || pgd_bad(*guest_pgd))
 			continue;
@@ -1714,10 +1715,8 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 		}
 	}
 
-	printk("kvm_fill_pt_to_original : pt esp:%lx\n", mm->pt_start);
-
-	// copy (0xc0000000 --> %esp in mm->guest_pgd into mm->pgd, converting to host_ha)
-	for (start = 0xc0000000 - 4096; start + 4096 >= esp; start -= 4096) {
+	// copy [0xb0000000, 0xc000000) in mm->guest_pgd into mm->pgd, converting to host_ha
+	for (start = 0xc0000000 - 4096; start >= 0xb0000000; start -= 4096) {
 		guest_pgd = mm->guest_pgd + pgd_index(start);
 		if (!native_pgd_val(*guest_pgd) || pgd_bad(*guest_pgd))
 			continue;
@@ -1745,6 +1744,35 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 		}
 	}
 	
+	// copy [0x40000000, 0x5000000) in mm->guest_pgd into mm->pgd, converting to host_ha
+	for (start = 0x40000000; start < 0x50000000; start += 4096) {
+		guest_pgd = mm->guest_pgd + pgd_index(start);
+		if (!native_pgd_val(*guest_pgd) || pgd_bad(*guest_pgd))
+			continue;
+
+		// convert the corresponding gpa to hpa
+		gpa_t temp = (gpa_t)native_pgd_val(*guest_pgd);
+		gfn = temp >> PAGE_SHIFT;
+		guest_ptep = (unsigned long*)gfn_to_hva(vcpu->kvm, gfn) + pte_index(start);
+		if (guest_ptep) {
+			temp = native_pte_val(*guest_ptep);
+			gfn = temp >> PAGE_SHIFT;
+			if (gfn == 0 || pte_none(*guest_ptep))
+				continue;
+			guest_pte_pfn = gfn_to_pfn(vcpu->kvm, gfn);
+
+			// host_ptep = new_host_pgd_page + pte_index(start);
+			pte_t new_pte = native_make_pte((guest_pte_pfn << PAGE_SHIFT) | (temp & 0xfff));
+			host_ptep = kvm_get_pte(mm, start);
+			if (host_ptep != NULL) {
+				native_set_pte(host_ptep, new_pte);
+				// DEBUG
+				printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
+				pte_unmap(host_ptep);
+			}
+		}
+	}
+
 	//up_read(&mm->mmap_sem);
 }
 EXPORT_SYMBOL_GPL(kvm_fill_pt_to_original);
@@ -2010,37 +2038,37 @@ gfn_t gfn_to_pfn_sy(struct kvm *kvm, gfn_t gfn, int pid)
 	unsigned long addr;
 	int npages;
 	pfn_t pfn;
-        printk(KERN_INFO "sangyan: gfn %lu\n", gfn);
-        printk(KERN_INFO "sangyan: pid %d\n", pid);
+        // printk(KERN_INFO "sangyan: gfn %lu\n", gfn);
+        // printk(KERN_INFO "sangyan: pid %d\n", pid);
 	might_sleep();
 
 	addr = gfn_to_hva(kvm, gfn);
-        printk(KERN_INFO "sangyan: hva %lu\n", addr);
+        // printk(KERN_INFO "sangyan: hva %lu\n", addr);
 	if (kvm_is_error_hva(addr)) {
-                printk(KERN_INFO "sangyan: kvm_is_error_hva\n");
+                // printk(KERN_INFO "sangyan: kvm_is_error_hva\n");
 		get_page(bad_page);
 		return page_to_pfn(bad_page);
 	}
 
 	npages = get_user_pages_fast_sy(addr, 1, 1, page, pid);
-        printk(KERN_INFO "sangyan: npages %d\n", npages);
+        // printk(KERN_INFO "sangyan: npages %d\n", npages);
 
 	if (unlikely(npages != 1)) {
-                printk(KERN_INFO "sangyan: npages != 1\n");
+                // printk(KERN_INFO "sangyan: npages != 1\n");
 		struct vm_area_struct *vma;
                 struct task_struct *task = NULL;
                 
                 for_each_process(task)
-                    if(task->pid == pid) { printk(KERN_INFO "PID match\n"); break;}
-                printk(KERN_INFO "task %p\n", task);
-                if(task == NULL) { printk(KERN_INFO "task null\n"); get_page(bad_page); return page_to_pfn(bad_page); }
+                    if(task->pid == pid) {/* printk(KERN_INFO "PID match\n");*/ break;}
+                //printk(KERN_INFO "task %p\n", task);
+                if(task == NULL) { /*printk(KERN_INFO "task null\n"); */get_page(bad_page); return page_to_pfn(bad_page); }
 
 		down_read(&task->mm->mmap_sem);
 		vma = find_vma(task->mm, addr);
 
 		if (vma == NULL || addr < vma->vm_start ||
 		    !(vma->vm_flags & VM_PFNMAP)) {
-                        printk(KERN_INFO "sangyan: vma == NULL\n");
+                        // printk(KERN_INFO "sangyan: vma == NULL\n");
 			up_read(&task->mm->mmap_sem);
 			get_page(bad_page);
 			return page_to_pfn(bad_page);
@@ -3002,17 +3030,17 @@ static long kvm_gfn_to_pfn(long arg)
         r = -EFAULT;
 	if (copy_from_user(&kvm_gfn_trans, argp, sizeof kvm_gfn_trans)) goto out;
     
-		printk(KERN_INFO "sangyan: vm_id %d\n", kvm_gfn_trans.vm_id);
+		// printk(KERN_INFO "sangyan: vm_id %d\n", kvm_gfn_trans.vm_id);
 	i = -1;
         list_for_each_entry(kvm, &vm_list, vm_list)
 	{
            i++;
-           printk(KERN_INFO "sangyan: kvm %p i %d\n", kvm, i);
+           // printk(KERN_INFO "sangyan: kvm %p i %d\n", kvm, i);
            if(kvm == NULL) continue;
-        printk(KERN_INFO "sangyan: kvm->nmemslots %d\n", kvm->nmemslots);
+        // printk(KERN_INFO "sangyan: kvm->nmemslots %d\n", kvm->nmemslots);
 	for (j = 0; j < kvm->nmemslots; ++j) {
-                printk(KERN_INFO "sangyan: memslot->base_gfn %lu\n", kvm->memslots[j].base_gfn);
-                printk(KERN_INFO "sangyan: memslot->npages %lu\n", kvm->memslots[j].npages);
+                // printk(KERN_INFO "sangyan: memslot->base_gfn %lu\n", kvm->memslots[j].base_gfn);
+                // printk(KERN_INFO "sangyan: memslot->npages %lu\n", kvm->memslots[j].npages);
 	}
            
 	}
@@ -3024,21 +3052,21 @@ static long kvm_gfn_to_pfn(long arg)
 	   if(i == kvm_gfn_trans.vm_id) break;
 	}
        
-		printk(KERN_INFO "sangyan: kvm %p\n", kvm);
+		// printk(KERN_INFO "sangyan: kvm %p\n", kvm);
 
-		printk(KERN_INFO "sangyan: nlist %lu\n", kvm_gfn_trans.nlist);
-		printk(KERN_INFO "sangyan: pid %d\n", kvm_gfn_trans.pid);
-		printk(KERN_INFO "sangyan: gfn %lu\n", kvm_gfn_trans.gfn);
-		printk(KERN_INFO "sangyan: pfn %lu\n", kvm_gfn_trans.pfn);
+		// printk(KERN_INFO "sangyan: nlist %lu\n", kvm_gfn_trans.nlist);
+		// printk(KERN_INFO "sangyan: pid %d\n", kvm_gfn_trans.pid);
+		// printk(KERN_INFO "sangyan: gfn %lu\n", kvm_gfn_trans.gfn);
+		// printk(KERN_INFO "sangyan: pfn %lu\n", kvm_gfn_trans.pfn);
         
         l = kvm_gfn_trans.nlist;
 		mygfn = kvm_gfn_trans.gfn; mypfn = kvm_gfn_trans.pfn;
         while(l > 0)
         {
-             printk(KERN_INFO "sangyan: l %d\n", l);
+             // printk(KERN_INFO "sangyan: l %d\n", l);
              if(l >= 500) ncopy = 500; else ncopy = l;
              l = l - ncopy;
-             printk(KERN_INFO "sangyan: l %d ncopy %d\n", l, ncopy);
+             // printk(KERN_INFO "sangyan: l %d ncopy %d\n", l, ncopy);
              
              r = -EFAULT;
 	     if (copy_from_user(gfn, (unsigned long *)(mygfn), ncopy*sizeof(unsigned long))) goto out;
@@ -3046,11 +3074,11 @@ static long kvm_gfn_to_pfn(long arg)
              i = 0;
              while(i < ncopy)
              {
-		printk(KERN_INFO "sangyan: pid %d\n", kvm_gfn_trans.pid);
-		printk(KERN_INFO "sangyan: i %d gfn %lu\n", i, gfn[i]);
+		// printk(KERN_INFO "sangyan: pid %d\n", kvm_gfn_trans.pid);
+		// printk(KERN_INFO "sangyan: i %d gfn %lu\n", i, gfn[i]);
 	        pfn[i] = gfn_to_pfn_sy(kvm, gfn[i], kvm_gfn_trans.pid);
-		printk(KERN_INFO "sangyan: i %d pfn %lu\n", i, pfn[i]);
-                if(is_error_pfn(pfn[i])) printk(KERN_INFO "sangyan: pfn %lu error\n", pfn[i]);
+		// printk(KERN_INFO "sangyan: i %d pfn %lu\n", i, pfn[i]);
+                // if(is_error_pfn(pfn[i])) printk(KERN_INFO "sangyan: pfn %lu error\n", pfn[i]);
 
                 i++;
              }

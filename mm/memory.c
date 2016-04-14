@@ -1256,7 +1256,7 @@ int __get_user_pages_sy(struct task_struct *tsk, struct mm_struct *mm,
 
 		vma = find_extend_vma(mm, start);
 		if (!vma && in_gate_area(tsk, start)) {
-			printk(KERN_INFO "if 1\n");
+			// printk(KERN_INFO "if 1\n");
                         unsigned long pg = start & PAGE_MASK;
 			struct vm_area_struct *gate_vma = get_gate_vma(tsk);
 			pgd_t *pgd;
@@ -1266,7 +1266,7 @@ int __get_user_pages_sy(struct task_struct *tsk, struct mm_struct *mm,
 
 			/* user gate pages are read-only */
 			if (gup_flags & FOLL_WRITE)
-				{ printk(KERN_INFO "r 1\n"); return i ? : -EFAULT;}
+				{ /*printk(KERN_INFO "r 1\n");*/ return i ? : -EFAULT;}
 			if (pg > TASK_SIZE)
 				pgd = pgd_offset_k(pg);
 			else
@@ -1276,14 +1276,14 @@ int __get_user_pages_sy(struct task_struct *tsk, struct mm_struct *mm,
 			BUG_ON(pud_none(*pud));
 			pmd = pmd_offset(pud, pg);
 			if (pmd_none(*pmd))
-				{ printk(KERN_INFO "r 2\n"); return i ? : -EFAULT;}
+				{/* printk(KERN_INFO "r 2\n"); */return i ? : -EFAULT;}
 			pte = pte_offset_map(pmd, pg);
 			if (pte_none(*pte)) {
 				pte_unmap(pte);
-				printk(KERN_INFO "r 3\n"); return i ? : -EFAULT;
+				/*printk(KERN_INFO "r 3\n"); */return i ? : -EFAULT;
 			}
 			if (pages) {
-                                printk(KERN_INFO "if 2\n");
+                                // printk(KERN_INFO "if 2\n");
 				struct page *page;
 
 				page = vm_normal_page(gate_vma, start, *pte);
@@ -1293,7 +1293,7 @@ int __get_user_pages_sy(struct task_struct *tsk, struct mm_struct *mm,
 						page = pte_page(*pte);
 					else {
 						pte_unmap(pte);
-						printk(KERN_INFO "r 4\n"); return i ? : -EFAULT;
+						/*printk(KERN_INFO "r 4\n");*/ return i ? : -EFAULT;
 					}
 				}
 				pages[i] = page;
@@ -1311,10 +1311,10 @@ int __get_user_pages_sy(struct task_struct *tsk, struct mm_struct *mm,
 		if (!vma ||
 		    (vma->vm_flags & (VM_IO | VM_PFNMAP)) ||
 		    !(vm_flags & vma->vm_flags))
-			{ printk(KERN_INFO "r 5\n"); return i ? : -EFAULT;}
+			{ /*printk(KERN_INFO "r 5\n");*/ return i ? : -EFAULT;}
 
 		if (is_vm_hugetlb_page(vma)) {
-                        printk(KERN_INFO "if 3\n");
+                        // printk(KERN_INFO "if 3\n");
 			i = follow_hugetlb_page(mm, vma, pages, vmas,
 					&start, &nr_pages, i, gup_flags);
 			continue;
@@ -1329,11 +1329,11 @@ int __get_user_pages_sy(struct task_struct *tsk, struct mm_struct *mm,
 			 * pages and potentially allocating memory.
 			 */
 			if (unlikely(fatal_signal_pending(current)))
-				{ printk(KERN_INFO "if 4\n"); return i ? i : -ERESTARTSYS;}
+				{ /*printk(KERN_INFO "if 4\n"); */return i ? i : -ERESTARTSYS;}
 
 			cond_resched();
 			while (!(page = follow_page(vma, start, foll_flags))) {
-				printk(KERN_INFO "while 1\n");
+				// printk(KERN_INFO "while 1\n");
                                 int ret;
 
 				ret = handle_mm_fault(mm, vma, start,
@@ -1342,10 +1342,10 @@ int __get_user_pages_sy(struct task_struct *tsk, struct mm_struct *mm,
 
 				if (ret & VM_FAULT_ERROR) {
 					if (ret & VM_FAULT_OOM)
-						{ printk(KERN_INFO "r 6\n"); return i ? i : -ENOMEM;}
+						{ /*printk(KERN_INFO "r 6\n"); */return i ? i : -ENOMEM;}
 					if (ret &
 					    (VM_FAULT_HWPOISON|VM_FAULT_SIGBUS))
-						{ printk(KERN_INFO "r 7\n"); return i ? i : -EFAULT;}
+						{ /*printk(KERN_INFO "r 7\n"); */return i ? i : -EFAULT;}
 					BUG();
 				}
 				if (ret & VM_FAULT_MAJOR)
@@ -1372,9 +1372,9 @@ int __get_user_pages_sy(struct task_struct *tsk, struct mm_struct *mm,
 				cond_resched();
 			}
 			if (IS_ERR(page))
-				{ printk(KERN_INFO "r 8\n"); return i ? i : PTR_ERR(page);}
+				{ /*(printk(KERN_INFO "r 8\n");*/ return i ? i : PTR_ERR(page);}
 			if (pages) {
-                                printk(KERN_INFO "if 5\n");
+                                // (KERN_INFO "if 5\n");
 				pages[i] = page;
 
 				flush_anon_page(vma, page, start);
@@ -1387,7 +1387,7 @@ int __get_user_pages_sy(struct task_struct *tsk, struct mm_struct *mm,
 			nr_pages--;
 		} while (nr_pages && start < vma->vm_end);
 	} while (nr_pages);
-        printk(KERN_INFO "r 9\n");
+        // printk(KERN_INFO "r 9\n");
 	return i;
 }
 
@@ -1601,7 +1601,7 @@ int get_user_pages_sy(struct task_struct *tsk, struct mm_struct *mm,
 		unsigned long start, int nr_pages, int write, int force,
 		struct page **pages, struct vm_area_struct **vmas)
 {
-        printk(KERN_INFO "in get_user_pages_sy\n");
+        // printk(KERN_INFO "in get_user_pages_sy\n");
 	int flags = FOLL_TOUCH;
 
 	if (pages)
@@ -2930,7 +2930,7 @@ static int do_anonymous_page_sy(struct mm_struct *mm, struct vm_area_struct *vma
 	if (check_stack_guard_page(vma, address) < 0)
 		return VM_FAULT_SIGBUS;
 
-	printk("pass check_stack_guard_page\n");
+	// printk("pass check_stack_guard_page\n");
 
 	/* Use the zero-page for reads */
 	if (!(flags & FAULT_FLAG_WRITE)) {
@@ -3294,24 +3294,26 @@ static inline int handle_pte_fault_sy(struct mm_struct *mm,
 	entry = *pte;
 	if (!pte_present(entry)) {
 		if (pte_none(entry)) {
+			/*
 			if (vma->vm_ops) {
 				if (likely(vma->vm_ops->fault)) {
-					printk("do_linear_fault\n");
+					 printk("do_linear_fault\n");
 					return do_linear_fault(mm, vma, address,
 						pte, pmd, flags, entry);
 				}
 			}
-			printk("do_anonymous_page\n");
+			*/
+			// printk("do_anonymous_page\n");
 
 			return do_anonymous_page_sy(mm, vma, address,
 						 pte, pmd, flags, mypage);
 		}
 		if (pte_file(entry)) {
-			printk("do_nonlinear_fault\n");
+			 printk("do_nonlinear_fault\n");
 			return do_nonlinear_fault(mm, vma, address,
 					pte, pmd, flags, entry);
 		}
-		printk("do_swap_page\n");
+		 printk("do_swap_page\n");
 		return do_swap_page(mm, vma, address,
 					pte, pmd, flags, entry);
 	}
@@ -3425,7 +3427,7 @@ int handle_mm_fault_sy(struct mm_struct *mm, struct vm_area_struct *vma,
 	pte = pte_alloc_map(mm, pmd, address);
 	if (!pte)
 		return VM_FAULT_OOM;
-	printk("pass pgd alloc\n");
+	// printk("pass pgd alloc\n");
 	return handle_pte_fault_sy(mm, vma, address, pte, pmd, flags, mypage);
 }
 

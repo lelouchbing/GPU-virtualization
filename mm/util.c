@@ -264,12 +264,12 @@ int __attribute__((weak)) get_user_pages_fast_sy(unsigned long start,
 	struct mm_struct *mm = NULL;
 	int ret;
 
-        printk(KERN_INFO "in get_user_pages_fast_sy pid %d\n", pid);
+        // printk(KERN_INFO "in get_user_pages_fast_sy pid %d\n", pid);
 	for_each_process(task)
-            if(task->pid == pid) { printk(KERN_INFO "PID match\n"); break;}
-        printk(KERN_INFO "task %p\n", task);
-        if(task == NULL) { printk(KERN_INFO "process not found\n"); return 0; }
-        printk(KERN_INFO "task->pid %d\n", task->pid);
+            if(task->pid == pid) { /*printk(KERN_INFO "PID match\n"); */break;}
+        // printk(KERN_INFO "task %p\n", task);
+        if(task == NULL) {/* printk(KERN_INFO "process not found\n");*/ return 0; }
+        // printk(KERN_INFO "task->pid %d\n", task->pid);
         mm = task->mm;
 
         down_read(&mm->mmap_sem);

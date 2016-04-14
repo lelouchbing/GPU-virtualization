@@ -161,44 +161,44 @@ SYSCALL_DEFINE3(addrmap, unsigned long __user *, pfn, unsigned long, len, unsign
         int fault;        
         unsigned long * mypfn;
 
-		printk(KERN_INFO "sangyan: len %lu\n", len);
+		// printk(KERN_INFO "sangyan: len %lu\n", len);
 		int start_map = 0;
 		struct vm_area_struct* vma_iter;
 		int times = 0;
 find_anonymous_area:
-        hva_value = get_unmapped_area(NULL, start_map, max(len*4096, 4096*200), 0, 0);
+        hva_value = get_unmapped_area(NULL, start_map, len*4096, 0, 0);
         if (hva_value == -ENOSYS)
         	return -1;
 
-     	vma_iter = find_vma(current->mm, hva_value);
-     	if (times < 5 && vma_iter && vma_iter->vm_ops && vma_iter->vm_ops->fault) {
-     		start_map = hva_value + 4096 * 1024;
-     		printk("continue to find anonymous area\n");
-     		printk("%x\n", start_map);
-     		times++;
-     		goto find_anonymous_area;
-		}
+  //    	vma_iter = find_vma(current->mm, hva_value);
+  //    	if (times < 5 && vma_iter && vma_iter->vm_ops && vma_iter->vm_ops->fault) {
+  //    		start_map = hva_value + 4096 * 1024;
+  //    		// printk("continue to find anonymous area\n");
+  //    		// printk("%x\n", start_map);
+  //    		times++;
+  //    		goto find_anonymous_area;
+		// }
 
-		printk(KERN_INFO "sangyan: hva %lu\n", hva_value);
+		// printk(KERN_INFO "sangyan: hva %lu\n", hva_value);
         l = len; s2 = hva_value; mypfn = pfn;
         while(l > 0)
         {
-             printk(KERN_INFO "sangyan: l %d\n", l);
+             // printk(KERN_INFO "sangyan: l %d\n", l);
              if(l >= 1000) ncopy = 1000; else ncopy = l;
              l = l - ncopy;
-             printk(KERN_INFO "sangyan: l %d ncopy %d\n", l, ncopy);
+             // printk(KERN_INFO "sangyan: l %d ncopy %d\n", l, ncopy);
             
              if(copy_from_user(pfn_value, mypfn, ncopy*sizeof(unsigned long))) return -EFAULT;
         
              i = 0;
              while(i < ncopy)
              {
-		printk(KERN_INFO "sangyan: s2 %lu i %d pfn %lu\n", s2, i, pfn_value[i]);
+		// printk(KERN_INFO "sangyan: s2 %lu i %d pfn %lu\n", s2, i, pfn_value[i]);
                 mypage = pfn_to_page(pfn_value[i]);            
-		printk(KERN_INFO "sangyan: mypage %p\n", mypage);
+		// printk(KERN_INFO "sangyan: mypage %p\n", mypage);
 
                 fault = handle_mm_fault_sy(current->mm, find_vma(current->mm, s2), s2, FAULT_FLAG_WRITE, mypage);
-		printk(KERN_INFO "sangyan: fault %d\n", fault);
+		// printk(KERN_INFO "sangyan: fault %d\n", fault);
             
                 s2 = s2 + 4096;
                 i++;
@@ -207,6 +207,7 @@ find_anonymous_area:
 			 mypfn = mypfn + ncopy;
              
          } 
+         //__flush_tlb_all();
 
          if(copy_to_user(hva, &hva_value, sizeof(unsigned long))) return -EFAULT;
         
