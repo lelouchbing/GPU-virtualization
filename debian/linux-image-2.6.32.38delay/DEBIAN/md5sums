@@ -13,12 +13,12 @@ e248afc06d71bc7c5555b5e4755d6788  usr/share/doc/linux-image-2.6.32.38delay/examp
 421cd472e0fb907579b4557e8cae201d  usr/share/doc/linux-image-2.6.32.38delay/examples/etc/kernel/postinst.d/force-build-link.gz
 3981ec274e1ecd1f2444786e475ac655  usr/share/doc/linux-image-2.6.32.38delay/examples/etc/kernel/header_postrm.d/link.gz
 7e6981c7cb790d0f84745685d27bdc37  usr/share/doc/linux-image-2.6.32.38delay/examples/etc/sample.kernel-img.conf.gz
-ac67b76c2d1923dcab7a98802cdbd535  usr/share/doc/linux-image-2.6.32.38delay/changelog.Debian.gz
-6a94dd5a69a2de296d8f8b57c3a6ae9d  usr/share/doc/linux-image-2.6.32.38delay/Buildinfo.gz
+c2286b2b9470477c9ecc7542df2bb816  usr/share/doc/linux-image-2.6.32.38delay/changelog.Debian.gz
+2bc4a759e9384e12dcda848c1f6b8fbe  usr/share/doc/linux-image-2.6.32.38delay/Buildinfo.gz
 232b5ac5ff3ead38a7bed83aa85b7d42  usr/share/doc/linux-image-2.6.32.38delay/Changes.gz
 c2f5d482c115420a14e2eba1a4924077  usr/share/doc/linux-image-2.6.32.38delay/debian.README.gz
-8727933e425f1491128a6dd89cc8026b  usr/share/doc/linux-image-2.6.32.38delay/buildinfo.gz
-fe51b4416be8f9cf1b217b800f3fc093  usr/share/doc/linux-image-2.6.32.38delay/conf.vars.gz
+9a26d8576e06924213193352859f151a  usr/share/doc/linux-image-2.6.32.38delay/buildinfo.gz
+a556f7514a2420f7b073d40e2d6d3e0a  usr/share/doc/linux-image-2.6.32.38delay/conf.vars.gz
 7fb9dd8ca6524beaee2579383386e1f8  usr/share/doc/linux-image-2.6.32.38delay/copyright
 fd11e09e8e61694353f12b3de376292a  lib/firmware/2.6.32.38delay/sun/cassini.bin
 0487d65525b0325ce508b05b66f3dd69  lib/firmware/2.6.32.38delay/bnx2x-e1-5.0.21.0.fw
@@ -801,7 +801,7 @@ c1eb99bb4128dcc6c9b1ca5b43954847  lib/modules/2.6.32.38delay/kernel/arch/x86/ker
 849ac1362a1e6c3ebba97a0e520c4da3  lib/modules/2.6.32.38delay/kernel/arch/x86/kernel/cpu/mcheck/mce-inject.ko
 95782e30dbbbce7c01a8d4496b297402  lib/modules/2.6.32.38delay/kernel/arch/x86/kernel/msr.ko
 3d0d58fac43d2de7b4f01a787a2319c0  lib/modules/2.6.32.38delay/kernel/arch/x86/kernel/cpuid.ko
-00c0ad5f15233e45ddba1c08f6b147f7  lib/modules/2.6.32.38delay/kernel/arch/x86/kvm/kvm.ko
+c8c794441c593abbba41e846a3b18831  lib/modules/2.6.32.38delay/kernel/arch/x86/kvm/kvm.ko
 1dcc47e35a045fdcafd128510c2a1191  lib/modules/2.6.32.38delay/kernel/arch/x86/kvm/kvm-intel.ko
 c5d8789f0d78f686c150348050957897  lib/modules/2.6.32.38delay/kernel/arch/x86/kvm/kvm-amd.ko
 08a61ecadf435a957ffd9da7c2946d1a  lib/modules/2.6.32.38delay/kernel/arch/x86/oprofile/oprofile.ko
@@ -2931,6 +2931,6 @@ e642141b480586cb4f631c594980bed8  lib/modules/2.6.32.38delay/modules.alias
 c18cd31386804601ea680e2f29f5ec1e  lib/modules/2.6.32.38delay/modules.isapnpmap
 534890ab57294faf4188f943fb81c1ad  lib/modules/2.6.32.38delay/modules.alias.bin
 e38d0d09150ae9a8307d803dd33be2d7  lib/modules/2.6.32.38delay/modules.inputmap
-e5a9b8702cdf3f51c94467d68d177152  boot/vmlinuz-2.6.32.38delay
+4f0ca1198ec9423dad9c46f66aa5bffd  boot/vmlinuz-2.6.32.38delay
 146c7f920ff4b2559e42b8316b69cfb6  boot/System.map-2.6.32.38delay
-478bd43af3e80918c16c9f97e29aa080  boot/config-2.6.32.38delay
+6af564372069f5c5b4157715ce5f5ca8  boot/config-2.6.32.38delay

@@ -166,6 +166,7 @@ SYSCALL_DEFINE3(addrmap, unsigned long __user *, pfn, unsigned long, len, unsign
 		struct vm_area_struct* vma_iter;
 		int times = 0;
 find_anonymous_area:
+		//hva_value = do_mmap_pgoff(NULL, start_map, len*4096, 0, 0, 0);
         hva_value = get_unmapped_area(NULL, start_map, len*4096, 0, 0);
         if (hva_value == -ENOSYS)
         	return -1;
@@ -313,7 +314,8 @@ SYSCALL_DEFINE2(sleepgvirtus, unsigned long , addr, unsigned long , size)
 	native_write_cr3(virt_to_phys(host_task->mm->pgd));
 
 	printk("delay start!!\n");
-	
+	flush_tlb_all();
+
 	// mark this process the "modified"
 	host_task->mm->is_backend = 1;
 	return 0;

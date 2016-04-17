@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.32.38
- * Thu Apr 14 07:58:42 2016
+ * Sun Apr 17 09:15:11 2016
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_LEDS_DA903X_MODULE 1

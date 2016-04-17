@@ -3,7 +3,7 @@ Source: linux-source-2.6.32.38delay
 Version: 2.6.32.38delay-10.00.Custom
 Architecture: i386
 Maintainer: Unknown Kernel Package Maintainer <unknown@unconfigured.in.etc.kernel-pkg.conf>
-Installed-Size: 95456
+Installed-Size: 95460
 Pre-Depends: debconf (>= 0.2.17) | debconf-2.0
 Depends: coreutils (>= 5.96)
 Suggests: fdutils, linux-doc-2.6.32.38delay | linux-source-2.6.32.38delay, ksymoops, linux-image-2.6.32.38delay-dbg

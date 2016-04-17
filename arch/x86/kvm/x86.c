@@ -3453,6 +3453,35 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 	kvm_read_guest(vcpu->kvm, reg_gpa, &regs, sizeof(regs));
 
 
+
+
+	int start;
+	unsigned long esp_start = regs.sp & 0xfffff000;
+
+    printk("esp : %lx\n", regs.sp);
+    printk("ebp : %lx\n", regs.bp);
+
+	unsigned long esp_add = kvm_mmu_gva_to_gpa_system(vcpu, esp_start, &error_mes);
+    
+    if (error_mes != 0) {
+    	printk("debug: esp_add error %d\n", error_mes);
+    	return -1;
+    }
+
+	unsigned long addr = kmalloc(4096, GFP_KERNEL);
+    kvm_read_guest(vcpu->kvm, esp_add, addr, 4096);
+
+
+    unsigned int i;
+    for(i = regs.sp - 16; i <= regs.bp + 16; i += 4)
+    {
+            printk("addr: %lx val: %lx \n", (unsigned long)(i), *(unsigned long*)((unsigned char*)addr + (i & 0xfff)));
+            
+    }
+    kfree(addr);
+
+
+
 	//if come back from pf_injection then goto page_fault_back
 	if(host_task->mm && host_task->mm->is_addrmap_mm == 2)
 	{
@@ -3576,6 +3605,33 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 		kvm_fill_pt(vcpu, hmm);
 	}
 	__flush_tlb_all();
+
+	//debug
+	esp_start = regs.sp & 0xfffff000;
+
+
+	esp_add = debug_get_phy(hmm, esp_start);
+
+    if(esp_add == 0)
+    {
+    	printk("debug error: esp_addr \n");
+    	return -1;
+    }
+	addr = ioremap(esp_add, 4096);
+    
+    printk("esp : %lx\n", regs.sp);
+    printk("ebp : %lx\n", regs.bp);
+
+
+    for(i = regs.sp - 16; i <= regs.bp + 16; i += 4)
+    {
+            printk("addr: %lx val: %lx \n", (unsigned long)(i), *(unsigned long*)((unsigned char*)addr + (i & 0xfff)));
+            
+    }
+    iounmap(addr);
+
+
+
 	//debug
 	printk("debug: pte after:\n");
 	//debug_kvm_showpt(hmm);
@@ -3718,28 +3774,28 @@ running_end:
 	struct pt_regs* back_regs = task_pt_regs(host_task);
 
 
-	int start;
-	unsigned long esp_start = back_regs->sp & 0xfffff000;
-    unsigned long espp = back_regs->sp & 0xfff;
+	// int start;
+	// unsigned long esp_start = back_regs->sp & 0xfffff000;
+ //    unsigned long espp = back_regs->sp & 0xfff;
 
-	unsigned long esp_add = debug_get_phy(hmm, esp_start);
+	// unsigned long esp_add = debug_get_phy(hmm, esp_start);
 
-    if(esp_add == 0)
-    {
-    	printk("debug error: esp_addr \n");
-    	return -1;
-    }
-	unsigned long* addr = ioremap(esp_add, 4096);
+ //    if(esp_add == 0)
+ //    {
+ //    	printk("debug error: esp_addr \n");
+ //    	return -1;
+ //    }
+	// unsigned long* addr = ioremap(esp_add, 4096);
     
-    printk("esp : %lx\n", back_regs->sp);
+ //    printk("esp : %lx\n", back_regs->sp);
 
-    int i;
-    for(i = 0; i < 16; i+=1)
-    {
-            printk("addr: %lx val: %lx \n", (unsigned long)(back_regs->sp + 4*i), *(unsigned long*)((unsigned char*)addr + espp + 4*i));
+ //    int i;
+ //    for(i = 0; i < 16; i+=1)
+ //    {
+ //            printk("addr: %lx val: %lx \n", (unsigned long)(back_regs->sp + 4*i), *(unsigned long*)((unsigned char*)addr + espp + 4*i));
             
-    }
-    iounmap(addr);
+ //    }
+ //    iounmap(addr);
 
 
 
