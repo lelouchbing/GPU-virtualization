@@ -110,13 +110,13 @@ AUTOMAKE = ${SHELL} /home/gvirtus/gvirtus/gvirtus/missing --run automake-1.11
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -fno-stack-protector -Wl,-Ttext-segment=0x9000000 
+CFLAGS = -fno-stack-protector -Wl,-Ttext-segment=0x10000000 
 CPP = gcc -E
-CPPFLAGS =   -Wl,-Ttext-segment=0x9000000 -I/home/gvirtus/gvirtus/gvirtus/util -I/home/gvirtus/gvirtus/gvirtus/frontend -I/home/gvirtus/gvirtus/gvirtus/backend -D_PLUGINS_DIR=\"${exec_prefix}/lib/backend\" -D_CONFIG_FILE=\"${prefix}/etc/gvirtus.properties\"
+CPPFLAGS =   -Wl,-Ttext-segment=0x10000000 -I/home/gvirtus/gvirtus/gvirtus/util -I/home/gvirtus/gvirtus/gvirtus/frontend -I/home/gvirtus/gvirtus/gvirtus/backend -D_PLUGINS_DIR=\"${exec_prefix}/lib/backend\" -D_CONFIG_FILE=\"${prefix}/etc/gvirtus.properties\"
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -fno-stack-protector -Wall -pedantic -Werror -Wl,-Ttext-segment=0x9000000 
+CXXFLAGS = -fno-stack-protector -Wall -pedantic -Werror -Wl,-Ttext-segment=0x10000000 
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps

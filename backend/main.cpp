@@ -98,10 +98,6 @@ vector<string> split(const string& s, const string& f) {
 }
 
 int main(int argc, char** argv) {
-    static const unsigned int MAGIC_NUM = 0x233333;
-    unsigned int pendings[2*1024*1024];
-    pendings[0] = MAGIC_NUM;
-
     string conf = _CONFIG_FILE;
     if (argc == 2)
         conf = string(argv[1]);
