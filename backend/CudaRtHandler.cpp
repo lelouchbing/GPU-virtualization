@@ -43,6 +43,9 @@
 
 #include <dlfcn.h>
 
+#include <cstdlib>
+#include <stdio.h>
+
 using namespace std;
 
 map<string, CudaRtHandler::CudaRoutineHandler> *CudaRtHandler::mspHandlers = NULL;
@@ -66,18 +69,35 @@ CudaRtHandler::CudaRtHandler() {
 CudaRtHandler::~CudaRtHandler() {
 
 }
+
+map<std::string, std::string> myDeviceFunction;
+
+cudaError_t MycudaLaunch(const char* entry) {
+	char* handler = new char[11];
+	sprintf(handler, "%p", entry);
+	
+	if (myDeviceFunction.find(handler) == myDeviceFunction.end())
+		return cudaErrorApiFailureBase;
+	const char *device_entry = myDeviceFunction[handler].c_str();
+	delete handler;
+	return cudaLaunch(device_entry); 
+}
+
+
 unsigned long CudaRtHandler::cuda_handler_address[] = {
-	7, 
+	8, 
 	(unsigned long)cudaMemcpy,
 	(unsigned long)cudaMalloc, 
 	(unsigned long)cudaFree, 
 	(unsigned long)cudaSetupArgument,
 	(unsigned long)cudaConfigureCall, 
-	(unsigned long)cudaLaunch
-	};
+	(unsigned long)(MycudaLaunch),
+	(unsigned long)cudaMemset
+};
 
 // TODO(DEBUG): return original cuda api addresses:
 unsigned long* CudaRtHandler::GetOriginalAddress_DEBUG() {
+	printf("mycudalaunch: %lx\n", (unsigned long)MycudaLaunch);
 	return cuda_handler_address;
 }
 
@@ -144,7 +164,9 @@ void CudaRtHandler::RegisterDeviceFunction(std::string & handler, std::string & 
     if (it != mpDeviceFunction->end())
         mpDeviceFunction->erase(it);
     mpDeviceFunction->insert(make_pair(handler, function));
+    myDeviceFunction.insert(make_pair(handler, function));
     cout << "Registered DeviceFunction " << function << " with handler " << handler << endl;
+    cout << "Store DeviceFunction " << function << " with handler " << handler << "in myDeviceFunction" << endl;
 }
 
 void CudaRtHandler::RegisterDeviceFunction(const char * handler, const char * function) {

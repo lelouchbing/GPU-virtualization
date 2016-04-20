@@ -101,7 +101,7 @@ public:
     const char *GetSymbol(Buffer * in);
 
 private:
-    static unsigned long cuda_handler_address[];
+	static unsigned long cuda_handler_address[];
     void Initialize();
     typedef Result * (*CudaRoutineHandler)(CudaRtHandler *, Buffer *, bool);
     static std::map<std::string, CudaRoutineHandler> * mspHandlers;

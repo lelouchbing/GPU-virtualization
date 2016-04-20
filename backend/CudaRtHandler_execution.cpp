@@ -103,7 +103,9 @@ CUDA_ROUTINE_HANDLER(Launch) {
 	}
 
     char *handler = input_buffer->AssignString();
+	printf("handler: %s\n", handler);
     const char *entry = pThis->GetDeviceFunction(handler);
+	printf("entry: %s\n", entry);
     exit_code = cudaLaunch(entry);
 
     return new Result(exit_code);

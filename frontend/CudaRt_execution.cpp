@@ -24,6 +24,8 @@
  */
 
 #include "CudaRt.h"
+#include <stdio.h>
+
 
 using namespace std;
 
@@ -81,6 +83,7 @@ extern "C" __host__ cudaError_t CUDARTAPI cudaLaunch(const char *entry) {
     Buffer *launch = CudaRtFrontend::GetLaunchBuffer();
     // LAUN
     launch->Add<int>(0x4c41554e);
+	printf("entry: %s\n", entry);
     launch->AddString(CudaUtil::MarshalHostPointer(entry));
     if(Frontend::GetFrontend()->delay == 0)
     {
