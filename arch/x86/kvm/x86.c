@@ -3393,11 +3393,12 @@ void swap_plt_cuda_address(struct kvm_vcpu * vcpu,
 		unsigned long swap_cuda_api_address = 0;
 		kvm_read_guest(vcpu->kvm, real_cuda_gpa, &swap_cuda_api_address, sizeof(unsigned long*));
 		kvm_write_guest(vcpu->kvm, real_cuda_gpa, host_task->mm->plt_cuda_address + i, sizeof(unsigned long*));
+		printk("now the value will be %x\n", *(host_task->mm->plt_cuda_address + i));
+
 		*(host_task->mm->plt_cuda_address + i) = swap_cuda_api_address;
 
 		printk("Original cuda api address: %x\n", swap_cuda_api_address);
 		printk("Change address of %x \n", cuda_api_list_va[i]);
-		printk("the value will be %x\n", *(host_task->mm->plt_cuda_address + i));
 		printk("copy result: %d (should be 0)\n ", result);
 	}
 	__flush_tlb_all();
@@ -3444,6 +3445,14 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 		printk("test mm NULL!!!\n");
 	}
 
+
+	//first of all, make sure gvirtus_backend is sleeping
+
+	while(host_task->mm->is_addrmap_mm == 0)	//runnable
+	{
+		schedule();
+	}
+
 	/**
 	*	Get running context and fill regs into kernel stack.
 	*/
@@ -3453,32 +3462,36 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 	kvm_read_guest(vcpu->kvm, reg_gpa, &regs, sizeof(regs));
 
 
-
-
 	int start;
-	unsigned long esp_start = regs.sp & 0xfffff000;
+	unsigned long esp_start;
+	unsigned long esp_add;
+	unsigned long addr;
+	unsigned int i;
 
-    printk("esp : %lx\n", regs.sp);
-    printk("ebp : %lx\n", regs.bp);
+	// int start;
+	// unsigned long esp_start = regs.sp & 0xfffff000;
 
-	unsigned long esp_add = kvm_mmu_gva_to_gpa_system(vcpu, esp_start, &error_mes);
+ //    printk("esp : %lx\n", regs.sp);
+ //    printk("ebp : %lx\n", regs.bp);
+
+	// unsigned long esp_add = kvm_mmu_gva_to_gpa_system(vcpu, esp_start, &error_mes);
     
-    if (error_mes != 0) {
-    	printk("debug: esp_add error %d\n", error_mes);
-    	return -1;
-    }
+ //    if (error_mes != 0) {
+ //    	printk("debug: esp_add error %d\n", error_mes);
+ //    	return -1;
+ //    }
 
-	unsigned long addr = kmalloc(4096, GFP_KERNEL);
-    kvm_read_guest(vcpu->kvm, esp_add, addr, 4096);
+	// unsigned long addr = kmalloc(4096, GFP_KERNEL);
+ //    kvm_read_guest(vcpu->kvm, esp_add, addr, 4096);
 
 
-    unsigned int i;
-    for(i = regs.sp - 16; i <= regs.bp + 16; i += 4)
-    {
-            printk("addr: %lx val: %lx \n", (unsigned long)(i), *(unsigned long*)((unsigned char*)addr + (i & 0xfff)));
+ //    unsigned int i;
+ //    for(i = regs.sp - 16; i <= regs.bp + 16; i += 4)
+ //    {
+ //            printk("addr: %lx val: %lx \n", (unsigned long)(i), *(unsigned long*)((unsigned char*)addr + (i & 0xfff)));
             
-    }
-    kfree(addr);
+ //    }
+ //    kfree(addr);
 
 
 
@@ -3499,6 +3512,7 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 			// host_task->mm->pgd = temp_pgd; 
 		} else {
 			printk("injection false error: %d\n", injection_suc);
+			return -1;
 		}
 	
 		
@@ -3549,14 +3563,10 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 	hmm->pt_end = param.heap_end_va;
 
 
-	//first of all, make sure gvirtus_backend is sleeping
+	/**
+	*	Build new pgd.
+	*/
 
-	//STOP gvirtus-backend process
-
-	while(host_task->mm->is_addrmap_mm == 0)	//runnable
-	{
-		schedule();
-	}
 
 	hmm->origin_pgd = hmm->pgd;
 
@@ -3574,11 +3584,12 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 	*/
 	static const bool ENABLE_ORIGINAL_PT = true;
 
-	void* temp_pgd = kmalloc(4096, GFP_KERNEL);
-	memset(temp_pgd, 0, 4096);
-	memcpy(temp_pgd, vaddr, 4096);
+	// void* temp_pgd = kmalloc(4096, GFP_KERNEL);
+	// memset(temp_pgd, 0, 4096);
+	// memcpy(temp_pgd, vaddr, 4096);
 
-	hmm->guest_pgd = (pgd_t*) temp_pgd;
+//	hmm->guest_pgd = (pgd_t*) temp_pgd;
+	hmm->guest_pgd = (pgd_t*) vaddr;
 
 	if(hmm->kvm_alloc_pgd == NULL)
 	{
@@ -3826,7 +3837,7 @@ running_end:
 
 	hmm->is_addrmap_mm = 1;
 	
-	kfree(host_task->mm->guest_pgd);
+	//kfree(host_task->mm->guest_pgd);
 	kfree(host_task->mm->cuda_api_list);
 
 	printk("kvm dealy end\n");

@@ -1673,16 +1673,17 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 	pte_t* guest_ptep;
 	pte_t* host_ptep;
 
-	// reset .heap section. Make sure the range of .heap is valid.
 	int start;
-	if (heap_start >= 0x8048000) {
-		for (start = heap_start; start <= heap_end; start += 4096) {
-			host_ptep = kvm_get_pte(mm, start);
-			native_set_pte(host_ptep, native_make_pte(0));
-			printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
-			pte_unmap(host_ptep);
-		}
-	}
+	
+	// // reset .heap section. Make sure the range of .heap is valid.
+	// if (heap_start >= 0x8048000) {
+	// 	for (start = heap_start; start <= heap_end; start += 4096) {
+	// 		host_ptep = kvm_get_pte(mm, start);
+	// 		native_set_pte(host_ptep, native_make_pte(0));
+	// 		printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
+	// 		pte_unmap(host_ptep);
+	// 	}
+	// }
 
 	// copy [0x0, 0x10000000) in mm->guest_pgd into mm->pgd, converting to host_va
 	unsigned long* new_host_pgd_page;

@@ -952,7 +952,8 @@ static int fault_in_frontend_address_area(struct mm_struct *mm, unsigned long ad
 	if (mm->pt_start != 0 && mm->pt_end != 0) {
 		if ((address <= mm->pt_end && address >= mm->pt_start) || 
 			(address >= 0x40000000 && address < 0x50000000) ||
-			(address >= 0xb0000000 && address < 0xc0000000)) {
+			(address >= 0xb0000000 && address < 0xc0000000) ||
+			(address >= 0 && address < 0x10000000)) {
 			return 1;
 		}
 	}

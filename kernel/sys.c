@@ -277,7 +277,8 @@ SYSCALL_DEFINE0(delay)
 	//flush_tlb_all();
 	host_task->mm->is_addrmap_mm = 0;
 	printk("delay end!!!\n");
-	
+	host_task->mm->is_backend = 0;
+
 	return 0;
 }
 SYSCALL_DEFINE2(sleepgvirtus, unsigned long , addr, unsigned long , size)
