@@ -1624,7 +1624,7 @@ gpa_t temp;
 
 						native_set_pte(h_pte, native_make_pte((pfn << PAGE_SHIFT) | (temp & 0xfff)));
 						//native_make_pte((pfn << PAGE_SHIFT) | (temp & 0xfff));
-						printk("h_pte addr: %lx h_pte val: %lx \n", h_pte, *h_pte);
+						// printk("h_pte addr: %lx h_pte val: %lx \n", h_pte, *h_pte);
 						//printk("finished\n");
 
 						pte_unmap(h_pte);
@@ -1709,7 +1709,7 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 			if (host_ptep != NULL) {
 				native_set_pte(host_ptep, new_pte);
 				// DEBUG
-				printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
+				// printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
 				pte_unmap(host_ptep);
 			}
 
@@ -1739,7 +1739,7 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 			if (host_ptep != NULL) {
 				native_set_pte(host_ptep, new_pte);
 				// DEBUG
-				printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
+				// printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
 				pte_unmap(host_ptep);
 			}
 		}
@@ -1768,7 +1768,7 @@ int kvm_fill_pt_to_original(struct kvm_vcpu* vcpu, struct mm_struct* mm, unsigne
 			if (host_ptep != NULL) {
 				native_set_pte(host_ptep, new_pte);
 				// DEBUG
-				printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
+				// printk("address: %lx, pte_val:%lx\n", start, *host_ptep);
 				pte_unmap(host_ptep);
 			}
 		}

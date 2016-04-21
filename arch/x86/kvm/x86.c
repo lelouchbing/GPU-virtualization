@@ -3375,7 +3375,7 @@ void swap_plt_cuda_address(struct kvm_vcpu * vcpu,
 	int cuda_api_list_size = cuda_api_list_va[0];
 	unsigned long* user_addr = 0;
 
-	printk("cuda api list size: %d\n", cuda_api_list_va[0]);
+	// printk("cuda api list size: %d\n", cuda_api_list_va[0]);
 	for (i = 1; i <= cuda_api_list_size; ++i) {
 		// if address is equal to 0, we dont need to rewrite this address.
 		if (cuda_api_list_va[i] == 0) {
@@ -3384,7 +3384,7 @@ void swap_plt_cuda_address(struct kvm_vcpu * vcpu,
 
 		real_cuda_gpa = 
 			kvm_mmu_gva_to_gpa_system(vcpu, cuda_api_list_va[i], &error_mes);
-		printk("error msg:%u\n", error_mes);
+		// printk("error msg:%u\n", error_mes);
 
 		user_addr = gfn_to_hva(vcpu->kvm, real_cuda_gpa>>PAGE_SHIFT);
 		// result = copy_to_user((void __user*)(user_addr + (real_cuda_gpa & 0xfff)), 
@@ -3393,13 +3393,13 @@ void swap_plt_cuda_address(struct kvm_vcpu * vcpu,
 		unsigned long swap_cuda_api_address = 0;
 		kvm_read_guest(vcpu->kvm, real_cuda_gpa, &swap_cuda_api_address, sizeof(unsigned long*));
 		kvm_write_guest(vcpu->kvm, real_cuda_gpa, host_task->mm->plt_cuda_address + i, sizeof(unsigned long*));
-		printk("now the value will be %x\n", *(host_task->mm->plt_cuda_address + i));
+		// printk("now the value will be %x\n", *(host_task->mm->plt_cuda_address + i));
 
 		*(host_task->mm->plt_cuda_address + i) = swap_cuda_api_address;
 
-		printk("Original cuda api address: %x\n", swap_cuda_api_address);
-		printk("Change address of %x \n", cuda_api_list_va[i]);
-		printk("copy result: %d (should be 0)\n ", result);
+		// printk("Original cuda api address: %x\n", swap_cuda_api_address);
+		// printk("Change address of %x \n", cuda_api_list_va[i]);
+		// printk("copy result: %d (should be 0)\n ", result);
 	}
 	__flush_tlb_all();
 
@@ -3422,7 +3422,7 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 
 	struct pt_regs regs;
 
-	printk("backend_pid %d\n", (int)backend_pid);
+	// printk("backend_pid %d\n", (int)backend_pid);
 
 	struct pid* hostpid = NULL;
 	hostpid = find_get_pid((int)backend_pid);
@@ -3533,8 +3533,8 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 	param_gpa = kvm_mmu_gva_to_gpa_system(vcpu, param_addr, &error_mes);
 	kvm_read_guest(vcpu->kvm, param_gpa, &param, sizeof(struct hyper_parameter));
 	// DEBUG
-	printk("size: %d\n", sizeof(struct hyper_parameter));
-	printk("pgd: %lx, heap_start:%lx, heap_end:%lx \n", param.pgd_pa, param.heap_start_va, param.heap_end_va);
+//	printk("size: %d\n", sizeof(struct hyper_parameter));
+//	printk("pgd: %lx, heap_start:%lx, heap_end:%lx \n", param.pgd_pa, param.heap_start_va, param.heap_end_va);
 
 	/**
 	*	Convert frontend process' page_table GPA into HVA.
@@ -3550,10 +3550,10 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 	}
 
 	vaddr += phy_addr & 0xfff;
-	printk("host gpgd virt addr: %x\n", vaddr);
+//	printk("host gpgd virt addr: %x\n", vaddr);
 
 	//check
-	printk("gpgd val: %x\n", *vaddr);
+//	printk("gpgd val: %x\n", *vaddr);
 
 	/**
 	*	Store the start and end GVA of heap into mm->pt_start and mm->pt_end.
@@ -3598,7 +3598,7 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 
 	}
 
-	printk("guest pgd addr: %lx\n", hmm->guest_pgd);
+	// printk("guest pgd addr: %lx\n", hmm->guest_pgd);
 	
 
 	//debug
@@ -3621,30 +3621,30 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 	esp_start = regs.sp & 0xfffff000;
 
 
-	esp_add = debug_get_phy(hmm, esp_start);
+	// esp_add = debug_get_phy(hmm, esp_start);
 
-    if(esp_add == 0)
-    {
-    	printk("debug error: esp_addr \n");
-    	return -1;
-    }
-	addr = ioremap(esp_add, 4096);
+ //    if(esp_add == 0)
+ //    {
+ //    	printk("debug error: esp_addr \n");
+ //    	return -1;
+ //    }
+	// addr = ioremap(esp_add, 4096);
     
-    printk("esp : %lx\n", regs.sp);
-    printk("ebp : %lx\n", regs.bp);
+    // printk("esp : %lx\n", regs.sp);
+    // printk("ebp : %lx\n", regs.bp);
 
 
-    for(i = regs.sp - 16; i <= regs.bp + 16; i += 4)
-    {
-            printk("addr: %lx val: %lx \n", (unsigned long)(i), *(unsigned long*)((unsigned char*)addr + (i & 0xfff)));
+    // for(i = regs.sp - 16; i <= regs.bp + 16; i += 4)
+    // {
+    //         printk("addr: %lx val: %lx \n", (unsigned long)(i), *(unsigned long*)((unsigned char*)addr + (i & 0xfff)));
             
-    }
-    iounmap(addr);
+    // }
+    // iounmap(addr);
 
 
 
 	//debug
-	printk("debug: pte after:\n");
+	// printk("debug: pte after:\n");
 	//debug_kvm_showpt(hmm);
 
 
@@ -3653,20 +3653,20 @@ int kvm_addrmap(struct kvm_vcpu * vcpu, unsigned long param_addr,
 	host_task->mm->origin_regs = kvm_fill_regs(host_task, regs);
 	//host_task->mm->origin_regs = origin_regs;
 
-	debug_show_host_regs(host_task);
+	// debug_show_host_regs(host_task);
 
 	/**
 	*	Rewrite the cuda api entries with the real api HVA
 	*/
 
-	// Convert the GVA of cuda_api_list into GPA.
-	printk("cuda_api_list gva is:%x\n", cuda_api_list_gva);
+	// // Convert the GVA of cuda_api_list into GPA.
+	// printk("cuda_api_list gva is:%x\n", cuda_api_list_gva);
 	
 	unsigned long cuda_api_list_gpa =
 			kvm_mmu_gva_to_gpa_system(vcpu, cuda_api_list_gva, &error_mes);
-		printk("error msg:%u\n", error_mes);
+		// printk("error msg:%u\n", error_mes);
 	
-	printk("cuda_api_list gpa is:%x\n", cuda_api_list_gpa);
+	// printk("cuda_api_list gpa is:%x\n", cuda_api_list_gpa);
  
  	// Read contents of cuda_api_list from Guest.
  	// The list contains the GVA of serveral cuda function entries in .got section
@@ -3745,9 +3745,9 @@ page_fault_back:
 			case 2:
 				kvm_inject_page_fault(vcpu, host_task->mm->pf.addr, host_task->mm->pf.error_code);
 				//inject page_fault
-				printk("inject pf to kvm\n");
-				printk("test error addr: %x\n", host_task->mm->pf.addr);
-				printk("test error code: %d\n", host_task->mm->pf.error_code);
+				// printk("inject pf to kvm\n");
+				// printk("test error addr: %x\n", host_task->mm->pf.addr);
+				// printk("test error code: %d\n", host_task->mm->pf.error_code);
 
 				return 2;
 				
@@ -3827,7 +3827,7 @@ running_end:
 
 
 	kvm_write_guest(vcpu->kvm, reg_gpa, back_regs, sizeof(struct pt_regs));
-	debug_show_host_regs(host_task);
+	// debug_show_host_regs(host_task);
 
 	kvm_fill_back_regs(host_task, host_task->mm->origin_regs);
 
@@ -3840,7 +3840,7 @@ running_end:
 	//kfree(host_task->mm->guest_pgd);
 	kfree(host_task->mm->cuda_api_list);
 
-	printk("kvm dealy end\n");
+	printk("kvm vmcall handler finished.\n");
 	
 	return 0;
 }

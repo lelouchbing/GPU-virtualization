@@ -1008,7 +1008,7 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
 	static const bool ENABLE_PF_INJECTION = true;		
 	if(mm && mm->is_backend == 1 && ENABLE_PF_INJECTION)
 	{
-		printk("PAGE FAULT IN backend process: %lx\n", address);
+		//printk("PAGE FAULT IN backend process: %lx\n", address);
 		if (fault_in_frontend_address_area(mm, address)) {
 			
 			mm->pf.addr = address;

@@ -276,14 +276,14 @@ SYSCALL_DEFINE0(delay)
 	native_write_cr3(virt_to_phys(host_task->mm->pgd));
 	//flush_tlb_all();
 	host_task->mm->is_addrmap_mm = 0;
-	printk("delay end!!!\n");
+	printk("delay end.\n");
 	host_task->mm->is_backend = 0;
 
 	return 0;
 }
 SYSCALL_DEFINE2(sleepgvirtus, unsigned long , addr, unsigned long , size)
 {
-	printk("DEBUG: get addr: %lx", addr);
+	// printk("DEBUG: get addr: %lx", addr);
 
 	struct task_struct* host_task = current;
 	if(!host_task)
@@ -314,7 +314,7 @@ SYSCALL_DEFINE2(sleepgvirtus, unsigned long , addr, unsigned long , size)
 	flush_tlb_all();
 	native_write_cr3(virt_to_phys(host_task->mm->pgd));
 
-	printk("delay start!!\n");
+	printk("delay start.\n");
 	flush_tlb_all();
 
 	// mark this process the "modified"
